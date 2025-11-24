@@ -12,7 +12,13 @@ const app = express();
 // Middleware
 app.use(helmet());  // Security headers
 app.use(morgan('combined'));  // Logging
-app.use(cors());  // Enable CORS for frontend
+app.use(cors({
+  origin: [
+    'http://localhost:5173',  // Local development
+    'https://dthom26.github.io'  // GitHub Pages
+  ],
+  credentials: true
+}));  // Enable CORS for frontend
 app.use(express.json());  // Parse JSON bodies
 app.use(express.urlencoded({ extended: true }));  // Parse URL-encoded bodies
 

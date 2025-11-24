@@ -1,0 +1,224 @@
+/* Student Schedules Calendar Styles - Professional Week View */
+
+.calendar-container {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: visible;
+  background: #ffffff;
+}
+
+.calendar-header {
+  display: flex;
+  background: #ffffff;
+  border-bottom: 2px solid var(--border);
+  height: 60px;
+}
+
+.time-col-header {
+  width: 80px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border);
+  background: #f7fafc;
+}
+
+.day-col-header {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid var(--border);
+  padding: 8px;
+  min-height: 60px;
+}
+
+.day-col-header:last-child {
+  border-right: none;
+}
+
+.day-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a202c;
+  text-align: center;
+}
+
+.calendar-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: visible;
+  position: relative;
+}
+
+.calendar-time-row {
+  display: flex;
+  height: 40px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+
+.calendar-time-row:last-child {
+  border-bottom: none;
+}
+
+.time-label {
+  width: 80px;
+  flex-shrink: 0;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #4a5568;
+  background: #f7fafc;
+  border-right: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  text-align: center;
+}
+
+.calendar-day-cell {
+  flex: 1;
+  border-right: 1px solid var(--border);
+  padding: 0;
+  position: relative;
+  background: #ffffff;
+  height: 100%;
+}
+
+.calendar-day-cell:last-child {
+  border-right: none;
+}
+
+.calendar-day-cell.day-cell-empty {
+  background: #f7fafc;
+}
+
+.schedule-event {
+  position: absolute;
+  top: 0;
+  margin: 0;
+  border-left: 4px solid;
+  border-radius: 0;
+  padding: 6px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  box-sizing: border-box;
+  min-width: 0;
+  pointer-events: auto;
+}
+
+/* Layout for 1 event in a cell */
+.schedule-event:only-child {
+  width: 100%;
+  left: 0;
+}
+
+/* Layout for 2 events in a cell */
+.calendar-day-cell:has(> .schedule-event:nth-child(2)) .schedule-event:nth-child(1) {
+  width: 50%;
+  left: 0;
+}
+
+.calendar-day-cell:has(> .schedule-event:nth-child(2)) .schedule-event:nth-child(2) {
+  width: 50%;
+  left: 50%;
+}
+
+/* Layout for 3+ events in a cell */
+.calendar-day-cell:has(> .schedule-event:nth-child(3)) .schedule-event:nth-child(n+1) {
+  width: 33.33%;
+}
+
+.calendar-day-cell:has(> .schedule-event:nth-child(3)) .schedule-event:nth-child(1) {
+  left: 0;
+}
+
+.calendar-day-cell:has(> .schedule-event:nth-child(3)) .schedule-event:nth-child(2) {
+  left: 33.33%;
+}
+
+.calendar-day-cell:has(> .schedule-event:nth-child(3)) .schedule-event:nth-child(3) {
+  left: 66.66%;
+}
+
+.schedule-event:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Tooltip on hover */
+.schedule-event:hover::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: pre-line;
+  z-index: 1000;
+  pointer-events: none;
+  margin-bottom: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* Tooltip arrow pointer */
+.schedule-event:hover::after {
+  content: '';
+  position: absolute;
+  bottom: calc(100% - 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: rgba(0, 0, 0, 0.9);
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.event-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.event-name {
+  font-weight: 600;
+  color: #1a202c;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 12px;
+}
+
+.event-status {
+  font-size: 11px;
+  color: #4a5568;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: #718096;
+  font-size: 14px;
+  text-align: center;
+  padding: 20px;
+}

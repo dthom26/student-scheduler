@@ -1,0 +1,105 @@
+/* Week grid styles (mobile-first) */
+.weekgrid-root{ display:flex; flex-direction:row; gap:16px; width:100%; }
+.weekgrid-left{ flex:1; }
+
+/* Mobile controls (hidden by default) */
+.mobile-controls{ display:none; width:100%; }
+.mobile-student-info{ display:none; }
+.mobile-mode-picker{ display:none; }
+.student-info{ margin-bottom:16px; }
+.student-info strong{ display:block; }
+.form-row{ margin-top:8px; display:flex; gap:12px; align-items:center; }
+.input{ padding:6px 8px; border-radius:6px; border:1px solid #dfe6ef; }
+.select{ padding:6px 8px; border-radius:6px; border:1px solid #dfe6ef; }
+.input-small{ width:120px; }
+.input-medium{ width:160px; }
+.select-wide{ width:200px; }
+.form-row strong{ margin-right:8px; }
+.mode-picker{ margin-bottom:16px; }
+.mode-picker strong{ display:block; margin-bottom:8px; }
+.mode-label{ display:inline-flex; align-items:center; gap:6px; margin-right:12px; cursor:pointer; }
+.mode-swatch{ display:inline-block; width:16px; height:16px; border:1px solid #999; border-radius:2px; }
+.weekgrid-times-row{ display:flex; gap:8px; margin-bottom:8px; }
+.time-col{ width:60px; text-align:right; font-size:12px; }
+.day-header{ width:80px; text-align:center; font-weight:700; }
+.time-row{ display:flex; gap:8px; align-items:center; }
+.slot{ width:80px; height:32px; border:1px solid #ccc; background:#eee; cursor:pointer; }
+.empty-slot{ width:80px; }
+.sidebar-right{ min-width:220px; }
+.sidebar-right button{ margin-right:8px; }
+.legend{ margin-top:16px; }
+.legend li{ margin-bottom:6px; }
+.legend li .swatch{ display:inline-block; width:18px; height:18px; border:1px solid #999; margin-right:8px; vertical-align:middle; }
+.notes textarea{ width:100%; }
+.warning{ color:#c00; margin-top:8px; }
+.legend ul{ padding-left:16px; }
+.notes{ margin-top:12px; }
+
+@media (max-width:900px){
+  /* Hide standalone legend on mobile since colors are now inline with mode picker */
+  .legend{ display:none; }
+}
+
+/* Day picker styles (hidden by default, shown on ultra-mobile) */
+.day-picker{ display:none; }
+.day-picker label{ display:block; font-weight:600; margin-bottom:8px; }
+.day-buttons{ display:flex; gap:6px; flex-wrap:wrap; }
+.day-button{ padding:8px 12px; border:1px solid #dfe6ef; background:#fff; border-radius:6px; cursor:pointer; font-weight:600; }
+.day-button.active{ background:#5b8def; color:#fff; border-color:#5b8def; }
+
+/* Single day grid (hidden by default, shown on ultra-mobile) */
+.single-day-grid{ display:none; }
+.single-day-slots{ display:flex; flex-direction:column; gap:8px; }
+.single-slot-row{ display:flex; gap:8px; align-items:center; }
+.slot-time{ width:50px; text-align:right; font-size:12px; }
+.single-slot{ flex:1; height:40px; border:1px solid #ccc; background:#eee; cursor:pointer; border-radius:4px; }
+
+@media (max-width:900px){
+  .weekgrid-root{ flex-direction:column; }
+  
+  /* Stack sidebar below grid */
+  .sidebar-right{ width:100%; min-width:unset; }
+  
+  /* Compress grid for mobile */
+  .slot{ width:70px; height:28px; font-size:11px; }
+  .empty-slot{ width:70px; }
+  .day-header{ width:70px; font-size:12px; }
+  .time-col{ width:50px; font-size:11px; }
+  .time-row{ gap:4px; }
+  
+  /* Reduce padding on grid area */
+  .weekgrid-left{ gap:12px; }
+  
+  /* Stack form inputs vertically on mobile */
+  .form-row{ flex-direction:column; gap:8px; align-items:flex-start; }
+  .input-small, .input-medium, .select-wide{ width:100%; max-width:none; }
+}
+
+@media (max-width:600px){
+  /* Extra small phones: even more compact */
+  .slot{ width:60px; height:24px; font-size:10px; }
+  .empty-slot{ width:60px; }
+  .day-header{ width:60px; font-size:11px; }
+  .time-col{ width:45px; font-size:10px; }
+  
+  /* Reduce mode picker label size */
+  .mode-picker label{ font-size:13px; margin-right:8px; }
+  
+  /* Tighter spacing */
+  .weekgrid-times-row{ gap:4px; margin-bottom:4px; }
+  .time-row{ gap:2px; }
+}
+
+@media (max-width:360px){
+  /* Ultra-mobile: switch to mobile controls */
+  .weekgrid-left{ display:none; }
+  .mobile-controls{ display:flex; flex-direction:column; gap:12px; }
+  .mobile-student-info{ display:block; }
+  .mobile-mode-picker{ display:block; }
+  .day-picker{ display:block; }
+  .single-day-grid{ display:block; }
+  
+  /* Full-width inputs */
+  .form-row{ flex-direction:column; gap:8px; }
+  .input-small, .input-medium, .select-wide{ width:100%; }
+}

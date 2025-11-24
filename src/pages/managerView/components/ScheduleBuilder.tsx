@@ -51,12 +51,20 @@ export default function ScheduleBuilder({
   onAssignmentStudentChange,
   onCellAssign,
 }: Props) {
+  // Calculate hours for a given student
+  const calculateHours = (studentId: string): number => {
+    const count = assignments.filter(a => a.studentId === studentId).length;
+    return count * 0.5; // Each slot is 30 minutes = 0.5 hours
+  };
+
+  const locationStudents = students.filter((s) => s.location === location);
+
   return (
     <div className="schedule-builder">
       <h3>Assignment Grid</h3>
       <div className="assignment-selector">
         <label className="assignment-label">
-          Assign student:
+          Click cells to assign:
           <select
             className="assignment-select"
             value={selectedAssignmentStudent}
@@ -65,24 +73,41 @@ export default function ScheduleBuilder({
             <option value="" disabled>
               Select student
             </option>
-            {students
-              .filter((s) => s.location === location)
-              .map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
+            {locationStudents.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
           </select>
         </label>
       </div>
-      <div className="assignment-grid-header">
-        <div className="assignment-time-header"></div>
-        {days.map((day) => (
-          <div key={day} className="assignment-day-header">
-            {day}
+      
+      <div className="assignment-grid-container">
+        {/* Student names column */}
+        <div className="assignment-student-column">
+          <div className="assignment-student-header">Student (Hours)</div>
+          {locationStudents.map((student) => (
+            <div 
+              key={student.id} 
+              className="assignment-student-name"
+              style={{ borderLeftColor: student.color }}
+            >
+              <span className="student-name-text">{student.name}</span>
+              <span className="student-hours">({calculateHours(student.id)}h)</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Time grid */}
+        <div className="assignment-grid-wrapper">
+          <div className="assignment-grid-header">
+            <div className="assignment-time-header"></div>
+            {days.map((day) => (
+              <div key={day} className="assignment-day-header">
+                {day}
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
       {times.map((time, timeIdx) => (
         <div key={time} className="assignment-grid-row">
           <div className="assignment-time-cell">
@@ -116,6 +141,8 @@ export default function ScheduleBuilder({
           })}
         </div>
       ))}
+        </div>
+      </div>
     </div>
   );
 }

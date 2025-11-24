@@ -7,7 +7,6 @@ interface Student {
 
 interface Props {
   location: string;
-  setLocation: (location: string) => void;
   selectedStudents: string[];
   onStudentToggle: (id: string) => void;
   students: Student[];
@@ -15,7 +14,6 @@ interface Props {
 
 export default function StudentFilter({
   location,
-  setLocation,
   selectedStudents,
   onStudentToggle,
   students,

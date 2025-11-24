@@ -200,7 +200,6 @@ export default function ManagerScheduleWireframe() {
       <div className="manager-content">
         <StudentFilter
           location={location}
-          setLocation={setLocation}
           selectedStudents={selectedStudents}
           onStudentToggle={handleStudentToggle}
           students={displayedStudents}

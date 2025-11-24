@@ -5,7 +5,7 @@ import ModePicker from "./components/ModePicker";
 import TimeGrid from "./components/TimeGrid";
 import DayPicker from "./components/DayPicker";
 import SingleDayGrid from "./components/SingleDayGrid";
-import { gridToScheduleSlots, createSubmission } from "../../services/scheduleService";
+import { createSubmission } from "../../services/scheduleService";
 import { submitSchedule } from "../../services/api";
 
 type CellType = keyof typeof cellTypes | null;

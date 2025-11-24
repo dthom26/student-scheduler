@@ -65,15 +65,7 @@ function getTimesForDay(day: Day): string[] {
   return day === "Fri" ? times.slice(0, times.indexOf("17:00") + 1) : times;
 }
 
-function getHourlyTimes(day: Day): Array<{ time: string; idx: number }> {
-  // Return only hour markers with their indices in the 30-min array
-  const dayTimes = getTimesForDay(day);
-  const hourlyTimes = [];
-  for (let i = 0; i < dayTimes.length; i += 2) {
-    hourlyTimes.push({ time: dayTimes[i], idx: i });
-  }
-  return hourlyTimes;
-}
+
 
 export default function StudentSchedulesCalendar({
   days,
@@ -120,8 +112,6 @@ export default function StudentSchedulesCalendar({
 
   // Iterate through ALL time slots (not just hourly)
   days.forEach((day) => {
-    const dayTimes = getTimesForDay(day);
-
     displayStudents.forEach((student) => {
       const studentAvailability = (availability as Record<
         string,
@@ -187,7 +177,6 @@ export default function StudentSchedulesCalendar({
   displayStudents.forEach((student, index) => {
     studentColumns.set(student.id, index);
   });
-  const totalStudents = displayStudents.length;
 
   return (
     <div className="calendar-container">

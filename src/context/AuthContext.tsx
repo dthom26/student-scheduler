@@ -2,6 +2,9 @@ import React, { createContext, useContext, useState, useEffect, type ReactNode }
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://student-schedular-backend.onrender.com';
 
+// Debug: Force build refresh - Nov 24 2025
+console.log('Using API URL:', API_BASE_URL);
+
 interface AuthContextType {
   token: string | null;
   role: 'student' | 'manager' | null;
@@ -36,6 +39,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsLoading(true);
     setError(null);
     try {
+      // Updated to use render backend - v2
       const response = await fetch(`${API_BASE_URL}/api/v1/auth/manager`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

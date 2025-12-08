@@ -12,7 +12,27 @@ type Grid = Record<Day, CellType[]>;
 
 const days: Day[] = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 const times = [
-  "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00"
+  "08:00",
+  "08:30",
+  "09:00",
+  "09:30",
+  "10:00",
+  "10:30",
+  "11:00",
+  "11:30",
+  "12:00",
+  "12:30",
+  "13:00",
+  "13:30",
+  "14:00",
+  "14:30",
+  "15:00",
+  "15:30",
+  "16:00",
+  "16:30",
+  "17:00",
+  "17:30",
+  "18:00",
 ];
 
 // Friday ends at 17:00
@@ -42,7 +62,9 @@ export default function WeekGridWireframe() {
   const handleCellClick = (day: Day, idx: number) => {
     setGrid((prev) => ({
       ...prev,
-      [day]: prev[day].map((val, i) => (i === idx ? (val === null ? mode : null) : val)),
+      [day]: prev[day].map((val, i) =>
+        i === idx ? (val === null ? mode : null) : val
+      ),
     }));
   };
 
@@ -55,21 +77,48 @@ export default function WeekGridWireframe() {
   return (
     <div className="weekgrid-root">
       <div className="weekgrid-left">
-          <WeekStudentInfo studentId={studentId} setStudentId={setStudentId} studentName={studentName} setStudentName={setStudentName} location={location} setLocation={setLocation} />
-          <ModePicker mode={mode} setMode={setMode} cellTypes={cellTypes} />
-          <TimeGrid grid={grid} handleCellClick={handleCellClick} times={times} days={days} getTimesForDay={getTimesForDay} cellTypes={cellTypes} />
+        <WeekStudentInfo
+          studentId={studentId}
+          setStudentId={setStudentId}
+          studentName={studentName}
+          setStudentName={setStudentName}
+          location={location}
+          setLocation={setLocation}
+        />
+        <ModePicker mode={mode} setMode={setMode} cellTypes={cellTypes} />
+        <TimeGrid
+          grid={grid}
+          times={times}
+          days={days}
+          getTimesForDay={getTimesForDay}
+          cellTypes={cellTypes}
+          handleDragStart={handleCellClick}
+        />
       </div>
 
       {/* Mobile-only controls (day picker, single-day grid, mode picker for 360px) */}
       <div className="mobile-controls">
         <div className="mobile-student-info">
-          <WeekStudentInfo studentId={studentId} setStudentId={setStudentId} studentName={studentName} setStudentName={setStudentName} location={location} setLocation={setLocation} />
+          <WeekStudentInfo
+            studentId={studentId}
+            setStudentId={setStudentId}
+            studentName={studentName}
+            setStudentName={setStudentName}
+            location={location}
+            setLocation={setLocation}
+          />
         </div>
         <div className="mobile-mode-picker">
           <ModePicker mode={mode} setMode={setMode} cellTypes={cellTypes} />
         </div>
         <DayPicker selectedDay={selectedDay} setSelectedDay={setSelectedDay} />
-        <SingleDayGrid day={selectedDay} slots={grid[selectedDay]} times={getTimesForDay(selectedDay)} onSlotClick={handleSingleDaySlotClick} cellTypes={cellTypes} />
+        <SingleDayGrid
+          day={selectedDay}
+          slots={grid[selectedDay]}
+          times={getTimesForDay(selectedDay)}
+          onSlotClick={handleSingleDaySlotClick}
+          cellTypes={cellTypes}
+        />
       </div>
 
       <div className="sidebar-right">
@@ -77,16 +126,15 @@ export default function WeekGridWireframe() {
           <button>Clear</button> <button disabled={!canSubmit}>Submit</button>
           {!canSubmit && (
             <div className="warning">
-              Please enter your Student ID, Name, and select a Location to submit.
+              Please enter your Student ID, Name, and select a Location to
+              submit.
             </div>
           )}
         </div>
         <div className="notes">
           <h3>Notes</h3>
           <textarea rows={4} placeholder="Add notes here..." />
-          
         </div>
-        
       </div>
     </div>
   );

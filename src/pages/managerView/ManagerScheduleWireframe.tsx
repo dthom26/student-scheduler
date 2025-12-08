@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import "./managerView.css";
 import StudentFilter from "./components/StudentFilter";
 import StudentSchedulesCalendar from "./components/StudentSchedulesCalendar";
@@ -31,12 +31,33 @@ interface Submission {
   studentId: string;
   studentName: string;
   location: string;
+  notes?: string;
   schedule: Array<{ day: Day; time: string; type: StudentStatus }>;
 }
 
 const days: Day[] = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 const times = [
-  "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00"
+  "08:00",
+  "08:30",
+  "09:00",
+  "09:30",
+  "10:00",
+  "10:30",
+  "11:00",
+  "11:30",
+  "12:00",
+  "12:30",
+  "13:00",
+  "13:30",
+  "14:00",
+  "14:30",
+  "15:00",
+  "15:30",
+  "16:00",
+  "16:30",
+  "17:00",
+  "17:30",
+  "18:00",
 ];
 
 const cellTypes: Record<string, CellType> = {
@@ -50,13 +71,13 @@ export default function ManagerScheduleWireframe() {
   const [location, setLocation] = useState<string>("hsl");
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
-  const [selectedAssignmentStudent, setSelectedAssignmentStudent] = useState<string>("");
+  const [selectedAssignmentStudent, setSelectedAssignmentStudent] =
+    useState<string>("");
   const { token } = useAuth();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [displayedStudents, setDisplayedStudents] = useState<Student[]>([]);
-  const [displayedAvailability, setDisplayedAvailability] = useState<Record<string, Record<Day, (StudentStatus | null)[]>>>({});
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   const handleStudentToggle = (id: string) => {
     setSelectedStudents((prev) =>
@@ -66,7 +87,27 @@ export default function ManagerScheduleWireframe() {
 
   const handleCellAssign = (day: Day, timeIdx: number) => {
     const times_arr = [
-      "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00"
+      "08:00",
+      "08:30",
+      "09:00",
+      "09:30",
+      "10:00",
+      "10:30",
+      "11:00",
+      "11:30",
+      "12:00",
+      "12:30",
+      "13:00",
+      "13:30",
+      "14:00",
+      "14:30",
+      "15:00",
+      "15:30",
+      "16:00",
+      "16:30",
+      "17:00",
+      "17:30",
+      "18:00",
     ];
     const slotTime = times_arr[timeIdx];
     const assignedIdx = assignments.findIndex(
@@ -89,150 +130,245 @@ export default function ManagerScheduleWireframe() {
 
   useEffect(() => {
     const loadSubmissions = async () => {
-      if(!token) {
-        setError('No auth token available');
+      if (!token) {
+        setError("No auth token available");
         return;
       }
 
-      // Transform functions defined inside useEffect
-      const transformSubmissionsToStudents = (submissions: Submission[]) => {
-        return submissions.map((sub, idx) => ({
-          id: sub.studentId,
-          name: sub.studentName,
-          color: `hsl(${idx * 60}, 70%, 60%)`,
-          location: sub.location
-        }));
-      };
+      setIsLoading(true);
+      setError(null);
 
-      const transformSubmissionsToAvailability = (submissions: Submission[]) => {
-        const availability: Record<string, Record<Day, (StudentStatus | null)[]>> = {};
-        const timeSlots = [
-          "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00"
-        ];
+      try {
+        // Load all submissions at once, not filtered by location
+        // This prevents multiple API calls when switching locations
+        const data = await fetchSubmissions(token);
+        setSubmissions(data);
+        setDataLoaded(true);
+      } catch (err) {
+        const errorMsg =
+          err instanceof Error
+            ? err.message
+            : "An error occurred while fetching submissions";
+        setError(errorMsg);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-        submissions.forEach((sub) => {
-          availability[sub.studentId] = {
-            Mon: [],
-            Tue: [],
-            Wed: [],
-            Thu: [],
-            Fri: []
-          };
+    // Only load data once when component mounts or token changes
+    if (token && !dataLoaded) {
+      loadSubmissions();
+    }
+  }, [token, dataLoaded]);
 
-          const daysList: Day[] = ["Mon", "Tue", "Wed", "Thu", "Fri"];
-          daysList.forEach((day) => {
-            const slotsForDay = day === "Fri" ? 17 : 21;
-            const daySlots: (StudentStatus | null)[] = new Array(slotsForDay).fill(null);
+  // Handle location changes without clearing all data
+  const handleLocationChange = (newLocation: string) => {
+    setLocation(newLocation);
+    // Reset only UI state, not the data
+    setSelectedStudents([]);
+    setAssignments([]);
+    setSelectedAssignmentStudent("");
+  };
 
-            sub.schedule.forEach((slot: { day: Day; time: string; type: StudentStatus }) => {
+  // Memoize the transformation functions for better performance
+  const displayedStudents = useMemo(() => {
+    return submissions
+      .filter((sub) => sub.location === location) // Filter by current location
+      .map((sub, idx) => ({
+        id: sub.studentId,
+        name: sub.studentName,
+        color: `hsl(${idx * 60}, 70%, 60%)`,
+        location: sub.location,
+        notes: sub.notes || "",
+      }));
+  }, [submissions, location]);
+
+  const displayedAvailability = useMemo(() => {
+    const availability: Record<
+      string,
+      Record<Day, (StudentStatus | null)[]>
+    > = {};
+    const timeSlots = [
+      "08:00",
+      "08:30",
+      "09:00",
+      "09:30",
+      "10:00",
+      "10:30",
+      "11:00",
+      "11:30",
+      "12:00",
+      "12:30",
+      "13:00",
+      "13:30",
+      "14:00",
+      "14:30",
+      "15:00",
+      "15:30",
+      "16:00",
+      "16:30",
+      "17:00",
+      "17:30",
+      "18:00",
+    ];
+
+    submissions
+      .filter((sub) => sub.location === location) // Only process submissions for current location
+      .forEach((sub) => {
+        availability[sub.studentId] = {
+          Mon: [],
+          Tue: [],
+          Wed: [],
+          Thu: [],
+          Fri: [],
+        };
+
+        const daysList: Day[] = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+        daysList.forEach((day) => {
+          // Friday: slots 0-17 (up to 17:00 for extended slots), Others: slots 0-20 (up to 18:00 for extended slots)
+          const slotsForDay = day === "Fri" ? 18 : 21;
+          const daySlots: (StudentStatus | null)[] = new Array(
+            slotsForDay
+          ).fill(null);
+
+          sub.schedule.forEach(
+            (slot: { day: Day; time: string; type: StudentStatus }) => {
               if (slot.day === day) {
                 const timeIndex = timeSlots.indexOf(slot.time);
                 if (timeIndex !== -1 && timeIndex < slotsForDay) {
                   daySlots[timeIndex] = slot.type;
                 }
               }
-            });
+            }
+          );
 
-            availability[sub.studentId][day] = daySlots;
-          });
+          availability[sub.studentId][day] = daySlots;
         });
+      });
 
-        return availability;
-      };
+    return availability;
+  }, [submissions, location]);
 
-      setIsLoading(true);
-      setError(null);
-      try {
-        const data = await fetchSubmissions(token);
-        // Debug logging (remove in production)
-        if (import.meta.env.DEV) {
-          console.log('Raw data from backend:', data);
-        }
-        setSubmissions(data);
+  // Update selected students when displayed students change
+  useEffect(() => {
+    setSelectedStudents(displayedStudents.map((s: Student) => s.id));
+  }, [displayedStudents]);
 
-        const transformedStudents = transformSubmissionsToStudents(data);
-        const transformedAvailability = transformSubmissionsToAvailability(data);
+  // Add refresh functionality
+  const handleRefreshData = async () => {
+    if (!token) return;
 
-        // Debug logging (remove in production)
-        if (import.meta.env.DEV) {
-          console.log('Transformed students:', transformedStudents);
-          console.log('Transformed availability:', transformedAvailability);
-        }
+    setIsLoading(true);
+    setError(null);
 
-        setDisplayedStudents(transformedStudents);
-        setDisplayedAvailability(transformedAvailability);
-        setSelectedStudents(transformedStudents.map((s: Student) => s.id));
-      } catch (err) {
-        const errorMsg = err instanceof Error ? err.message : 'An error occurred while fetching submissions';
-        setError(errorMsg);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadSubmissions();
-  }, [token]);
+    try {
+      const data = await fetchSubmissions(token, undefined, true); // Force refresh
+      setSubmissions(data);
+    } catch (err) {
+      const errorMsg =
+        err instanceof Error
+          ? err.message
+          : "An error occurred while refreshing data";
+      setError(errorMsg);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="manager-root">
-      {isLoading && <div style={{padding: '20px', textAlign: 'center'}}>Loading submissions...</div>}
-      {error && <div style={{padding: '20px', color: 'red', textAlign: 'center'}}>Error: {error}</div>}
-      {!isLoading && !error && submissions.length === 0 && <div style={{padding: '20px', textAlign: 'center'}}>No submissions available yet.</div>}
-      
-      {!isLoading && !error && submissions.length > 0 && (
-      <>
-      <header className="manager-header">
-        <h2>Manager Schedule</h2>
-        <div className="manager-header-controls">
-          <label className="location-label">
-            Location:
-            <select
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              className="location-select"
-            >
-              <option value="hsl">HSL</option>
-              <option value="med">Med</option>
-            </select>
-          </label>
+      {isLoading && !dataLoaded && (
+        <div style={{ padding: "20px", textAlign: "center" }}>
+          <div>Loading submissions...</div>
+          <div style={{ fontSize: "14px", marginTop: "10px", color: "#666" }}>
+            This may take a moment on first load
+          </div>
         </div>
-      </header>
+      )}
 
-      <div className="manager-content">
-        <StudentFilter
-          location={location}
-          selectedStudents={selectedStudents}
-          onStudentToggle={handleStudentToggle}
-          students={displayedStudents}
-        />
+      {error && (
+        <div style={{ padding: "20px", color: "red", textAlign: "center" }}>
+          Error: {error}
+          <button
+            onClick={handleRefreshData}
+            style={{ marginLeft: "10px", padding: "5px 10px" }}
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
-        <div className="manager-main">
-          <section className="manager-section">
-            <h3>Student Schedules</h3>
-            <StudentSchedulesCalendar
-              days={days}
-              students={displayedStudents}
-              selectedStudents={selectedStudents}
+      {!isLoading && !error && submissions.length === 0 && dataLoaded && (
+        <div style={{ padding: "20px", textAlign: "center" }}>
+          No submissions available yet.
+        </div>
+      )}
+
+      {(dataLoaded || (!isLoading && submissions.length > 0)) && !error && (
+        <>
+          <header className="manager-header">
+            <div className="manager-header-controls">
+              <label className="location-label">
+                Location:
+                <select
+                  value={location}
+                  onChange={(e) => handleLocationChange(e.target.value)}
+                  className="location-select"
+                >
+                  <option value="hsl">HSL</option>
+                  <option value="med">Med</option>
+                </select>
+              </label>
+              <button
+                onClick={handleRefreshData}
+                disabled={isLoading}
+                style={{
+                  marginLeft: "15px",
+                  padding: "5px 10px",
+                  opacity: isLoading ? 0.5 : 1,
+                }}
+              >
+                {isLoading ? "Refreshing..." : "Refresh Data"}
+              </button>
+            </div>
+          </header>
+
+          <div className="manager-content">
+            <StudentFilter
               location={location}
-              availability={displayedAvailability}
+              selectedStudents={selectedStudents}
+              onStudentToggle={handleStudentToggle}
+              students={displayedStudents}
               cellTypes={cellTypes}
             />
-          </section>
 
-          <section className="manager-section">
-            <ScheduleBuilder
-              days={days}
-              times={times}
-              students={displayedStudents}
-              location={location}
-              assignments={assignments}
-              selectedAssignmentStudent={selectedAssignmentStudent}
-              onAssignmentStudentChange={setSelectedAssignmentStudent}
-              onCellAssign={handleCellAssign}
-            />
-          </section>
-        </div>
-      </div>
-      </>
+            <div className="manager-main">
+              <section className="manager-section">
+                <h3>Student Schedules</h3>
+                <StudentSchedulesCalendar
+                  days={days}
+                  students={displayedStudents}
+                  selectedStudents={selectedStudents}
+                  availability={displayedAvailability}
+                  cellTypes={cellTypes}
+                />
+              </section>
+
+              <section className="manager-section">
+                <ScheduleBuilder
+                  days={days}
+                  times={times}
+                  students={displayedStudents}
+                  location={location}
+                  assignments={assignments}
+                  selectedAssignmentStudent={selectedAssignmentStudent}
+                  onAssignmentStudentChange={setSelectedAssignmentStudent}
+                  onCellAssign={handleCellAssign}
+                />
+              </section>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

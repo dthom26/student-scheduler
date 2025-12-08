@@ -1,8 +1,16 @@
+import { useState } from "react";
+
 interface Student {
   id: string;
   name: string;
   color: string;
   location: string;
+  notes?: string;
+}
+
+interface CellType {
+  label: string;
+  color: string;
 }
 
 interface Props {
@@ -10,6 +18,7 @@ interface Props {
   selectedStudents: string[];
   onStudentToggle: (id: string) => void;
   students: Student[];
+  cellTypes: Record<string, CellType>;
 }
 
 export default function StudentFilter({
@@ -17,24 +26,73 @@ export default function StudentFilter({
   selectedStudents,
   onStudentToggle,
   students,
+  cellTypes,
 }: Props) {
+  console.log(students);
+  const [expandedStudents, setExpandedStudents] = useState<Set<string>>(
+    new Set()
+  );
+  const toggleExpansion = (studentId: string) => {
+    setExpandedStudents((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(studentId)) {
+        newSet.delete(studentId);
+      } else {
+        newSet.add(studentId);
+      }
+      return newSet;
+    });
+  };
   return (
     <aside className="manager-sidebar">
       <h3>Students</h3>
       <ul className="student-list">
-        {students.filter((s) => s.location === location).map((s) => (
-          <li key={s.id} className="student-item">
-            <label className="student-label">
-              <input
-                type="checkbox"
-                checked={selectedStudents.includes(s.id)}
-                onChange={() => onStudentToggle(s.id)}
-              />{" "}
-              {s.name} ({s.id})
-            </label>
-          </li>
-        ))}
+        {students
+          .filter((s) => s.location === location)
+          .map((s) => (
+            <li key={s.id} className="student-item">
+              <div className="student-header">
+                <label className="student-label">
+                  <input
+                    type="checkbox"
+                    checked={selectedStudents.includes(s.id)}
+                    onChange={() => onStudentToggle(s.id)}
+                  />{" "}
+                  {s.name} ({s.id})
+                </label>
+                {s.notes && (
+                  <button
+                    onClick={() => toggleExpansion(s.id)}
+                    aria-expanded={expandedStudents.has(s.id)}
+                    className="expand-toggle"
+                  >
+                    {expandedStudents.has(s.id) ? "▼" : "▶"}
+                  </button>
+                )}
+              </div>
+              {expandedStudents.has(s.id) && s.notes && (
+                <div className="student-notes">
+                  <p>{s.notes}</p>
+                </div>
+              )}
+            </li>
+          ))}
       </ul>
+
+      <div className="legend-section">
+        <h4>Schedule Legend</h4>
+        <div className="legend-items">
+          {Object.entries(cellTypes).map(([key, type]) => (
+            <div key={key} className="legend-item">
+              <div 
+                className="legend-color" 
+                style={{ backgroundColor: type.color }}
+              ></div>
+              <span className="legend-label">{type.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
     </aside>
   );
 }

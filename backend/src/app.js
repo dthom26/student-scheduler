@@ -14,7 +14,8 @@ app.use(helmet());  // Security headers
 app.use(morgan('combined'));  // Logging
 app.use(cors({
   origin: [
-    'http://localhost:5173',  // Local development
+    'http://localhost:5173',  // Local development (Vite default)
+    'http://localhost:5174',  // Local development (alternate port)
     'https://dthom26.github.io'  // GitHub Pages
   ],
   credentials: true

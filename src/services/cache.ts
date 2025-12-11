@@ -9,7 +9,7 @@ interface Submission {
 
 class SubmissionCache {
   private cache = new Map<string, { data: Submission[]; timestamp: number }>();
-  private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+  private readonly CACHE_DURATION = 30 * 60 * 1000; // 5 minutes
 
   set(key: string, data: Submission[]): void {
     this.cache.set(key, {

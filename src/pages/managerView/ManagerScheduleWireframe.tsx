@@ -78,6 +78,13 @@ export default function ManagerScheduleWireframe() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dataLoaded, setDataLoaded] = useState(false);
+  const [selectedAvailabilityTypes, setSelectedAvailabilityTypes] = useState<
+    string[]
+  >(Object.keys(cellTypes));
+
+  const onTypeFilterChange = (selectedTypes: string[]) => {
+    setSelectedAvailabilityTypes(selectedTypes);
+  };
 
   const handleStudentToggle = (id: string) => {
     setSelectedStudents((prev) =>
@@ -340,6 +347,7 @@ export default function ManagerScheduleWireframe() {
               onStudentToggle={handleStudentToggle}
               students={displayedStudents}
               cellTypes={cellTypes}
+              onTypeFilterChange={onTypeFilterChange}
             />
 
             <div className="manager-main">
@@ -351,6 +359,7 @@ export default function ManagerScheduleWireframe() {
                   selectedStudents={selectedStudents}
                   availability={displayedAvailability}
                   cellTypes={cellTypes}
+                  selectedTypes={selectedAvailabilityTypes}
                 />
               </section>
 

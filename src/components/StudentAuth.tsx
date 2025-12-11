@@ -179,7 +179,6 @@ export default function StudentAuth({
   return (
     <div style={{ padding: "20px", maxWidth: "400px", margin: "0 auto" }}>
       <h2>Student Access</h2>
-
       {error && (
         <div
           style={{
@@ -193,21 +192,6 @@ export default function StudentAuth({
           {error}
         </div>
       )}
-
-      <div style={{ marginBottom: "20px" }}>
-        <label style={{ display: "block", marginBottom: "5px" }}>
-          Student ID <span style={{ color: "red" }}>*</span>
-        </label>
-        <input
-          type="text"
-          value={studentId}
-          onChange={(e) => setStudentId(e.target.value)}
-          placeholder="Enter your Student ID"
-          style={{ width: "100%", padding: "8px", marginBottom: "10px" }}
-          disabled={isLoading}
-        />
-      </div>
-
       {isReturningStudent === null && (
         <div style={{ marginBottom: "20px" }}>
           <p style={{ marginBottom: "15px", color: "#666" }}>
@@ -226,7 +210,7 @@ export default function StudentAuth({
                 border: "none",
                 borderRadius: "5px",
               }}
-              disabled={isLoading || !studentId.trim()}
+              disabled={isLoading}
             >
               New Student
             </button>
@@ -240,16 +224,29 @@ export default function StudentAuth({
                 border: "none",
                 borderRadius: "5px",
               }}
-              disabled={isLoading || !studentId.trim()}
+              disabled={isLoading}
             >
               Returning Student
             </button>
           </div>
         </div>
       )}
-
       {isReturningStudent === false && (
         <div>
+          <div style={{ marginBottom: "15px" }}>
+            <label style={{ display: "block", marginBottom: "5px" }}>
+              Student ID <span style={{ color: "red" }}>*</span>
+            </label>
+            <input
+              type="text"
+              value={studentId}
+              onChange={(e) => setStudentId(e.target.value)}
+              placeholder="Enter your Student ID"
+              style={{ width: "100%", padding: "8px" }}
+              disabled={isLoading}
+            />
+          </div>
+
           <div style={{ marginBottom: "15px" }}>
             <label style={{ display: "block", marginBottom: "5px" }}>
               Full Name <span style={{ color: "red" }}>*</span>
@@ -275,8 +272,8 @@ export default function StudentAuth({
               disabled={isLoading}
             >
               <option value="">Select Location</option>
-              <option value="hsl">HSL</option>
-              <option value="med">Med</option>
+              <option value="hsl">Health Sciences Library</option>
+              <option value="med">Medical Library</option>
             </select>
           </div>
 
@@ -298,24 +295,37 @@ export default function StudentAuth({
           </button>
         </div>
       )}
-
       {isReturningStudent === true && !existingSubmission && (
-        <button
-          onClick={handleReturningStudent}
-          disabled={isLoading || !studentId.trim()}
-          style={{
-            width: "100%",
-            padding: "10px",
-            backgroundColor: "#4caf50",
-            color: "white",
-            border: "none",
-            borderRadius: "5px",
-          }}
-        >
-          {isLoading ? "Loading..." : "Access My Existing Schedule"}
-        </button>
-      )}
-
+        <div>
+          <div style={{ marginBottom: "20px" }}>
+            <label style={{ display: "block", marginBottom: "5px" }}>
+              Student ID <span style={{ color: "red" }}>*</span>
+            </label>
+            <input
+              type="text"
+              value={studentId}
+              onChange={(e) => setStudentId(e.target.value)}
+              placeholder="Enter your Student ID"
+              style={{ width: "100%", padding: "8px" }}
+              disabled={isLoading}
+            />
+          </div>
+          <button
+            onClick={handleReturningStudent}
+            disabled={isLoading || !studentId.trim()}
+            style={{
+              width: "100%",
+              padding: "10px",
+              backgroundColor: "#4caf50",
+              color: "white",
+              border: "none",
+              borderRadius: "5px",
+            }}
+          >
+            {isLoading ? "Loading..." : "Access My Existing Schedule"}
+          </button>
+        </div>
+      )}{" "}
       {isReturningStudent !== null && (
         <button
           onClick={() => {
@@ -335,7 +345,6 @@ export default function StudentAuth({
           Back to Selection
         </button>
       )}
-
       {isLoading && (
         <div style={{ textAlign: "center", marginTop: "10px", color: "#666" }}>
           Please wait...

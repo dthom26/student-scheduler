@@ -86,6 +86,7 @@ interface Props {
   selectedStudents: string[];
   availability: Record<string, Record<Day, (StudentStatus | null)[]>>;
   cellTypes: Record<string, CellType>;
+  selectedTypes?: string[];
 }
 
 const StudentSchedulesCalendar = memo(function StudentSchedulesCalendar({
@@ -94,6 +95,7 @@ const StudentSchedulesCalendar = memo(function StudentSchedulesCalendar({
   selectedStudents,
   availability,
   cellTypes,
+  selectedTypes = [],
 }: Props) {
   // Memoize expensive calculations (before any early returns)
   const displayStudents = useMemo(() => {
@@ -136,6 +138,11 @@ const StudentSchedulesCalendar = memo(function StudentSchedulesCalendar({
 
           if (!status) continue;
 
+          // Filter by selected types - skip if this type is not selected
+          if (selectedTypes.length > 0 && !selectedTypes.includes(status)) {
+            continue;
+          }
+
           // Check if this is the start of a block
           const isPrevDifferent =
             slotIdx === 0 || dayData[slotIdx - 1] !== status;
@@ -170,7 +177,7 @@ const StudentSchedulesCalendar = memo(function StudentSchedulesCalendar({
     });
 
     return blocks;
-  }, [days, displayStudents, availability]);
+  }, [days, displayStudents, availability, selectedTypes]);
 
   // Memoize student columns mapping
   const studentColumns = useMemo(() => {

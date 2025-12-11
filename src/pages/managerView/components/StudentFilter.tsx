@@ -19,6 +19,7 @@ interface Props {
   onStudentToggle: (id: string) => void;
   students: Student[];
   cellTypes: Record<string, CellType>;
+  onTypeFilterChange?: (selectedTypes: string[]) => void;
 }
 
 export default function StudentFilter({
@@ -27,11 +28,16 @@ export default function StudentFilter({
   onStudentToggle,
   students,
   cellTypes,
+  onTypeFilterChange,
 }: Props) {
   console.log(students);
   const [expandedStudents, setExpandedStudents] = useState<Set<string>>(
     new Set()
   );
+  const [selectedTypes, setSelectedTypes] = useState<string[]>(
+    Object.keys(cellTypes)
+  );
+
   const toggleExpansion = (studentId: string) => {
     setExpandedStudents((prev) => {
       const newSet = new Set(prev);
@@ -41,6 +47,16 @@ export default function StudentFilter({
         newSet.add(studentId);
       }
       return newSet;
+    });
+  };
+
+  const handleTypeToggle = (typeKey: string) => {
+    setSelectedTypes((prev) => {
+      const newTypes = prev.includes(typeKey)
+        ? prev.filter((t) => t !== typeKey)
+        : [...prev, typeKey];
+      onTypeFilterChange?.(newTypes);
+      return newTypes;
     });
   };
   return (
@@ -84,8 +100,14 @@ export default function StudentFilter({
         <div className="legend-items">
           {Object.entries(cellTypes).map(([key, type]) => (
             <div key={key} className="legend-item">
-              <div 
-                className="legend-color" 
+              <input
+                type="checkbox"
+                id={`type-filter-${key}`}
+                checked={selectedTypes.includes(key)}
+                onChange={() => handleTypeToggle(key)}
+              />
+              <div
+                className="legend-color"
                 style={{ backgroundColor: type.color }}
               ></div>
               <span className="legend-label">{type.label}</span>

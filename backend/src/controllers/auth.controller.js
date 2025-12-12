@@ -16,3 +16,17 @@ export const login = async (req, res, next) => {
         next(error);
     }
 };
+
+/**
+ * Validate token endpoint - lightweight token validation
+ * No database queries, just checks if JWT is valid
+ * Used on app load to verify stored tokens
+ */
+export const validateToken = (req, res) => {
+    // If we reach here, the verifyManagerToken middleware already validated the token
+    // So we just need to return success
+    res.json({ 
+        valid: true, 
+        role: req.user.role 
+    });
+};

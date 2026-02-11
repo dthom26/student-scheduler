@@ -6,11 +6,12 @@ import React, {
   type ReactNode,
 } from "react";
 import { dataPreloader } from "../services/preloader";
+import { STORAGE_KEYS } from "../constants/storage";
+import { USER_ROLES } from "../constants/roles";
+import { ERROR_MESSAGES } from "../constants/errors";
+import { authRepository } from "../repositories/AuthRepository";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ||
-  "https://student-schedular-backend.onrender.com";
-
+import { API_BASE_URL } from "../constants/api";
 // Debug: Force build refresh - Nov 24 2025
 console.log("Using API URL:", API_BASE_URL);
 
@@ -22,9 +23,11 @@ interface StudentData {
   existingSubmission?: any;
 }
 
+type RoleType = (typeof USER_ROLES)[keyof typeof USER_ROLES] | null;
+
 interface AuthContextType {
   token: string | null;
-  role: "student" | "manager" | null;
+  role: RoleType;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
@@ -43,36 +46,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const [token, setToken] = useState<string | null>(null);
-  const [role, setRole] = useState<"student" | "manager" | null>(null);
+  const [role, setRole] = useState<RoleType>(null);
   const [isLoading, setIsLoading] = useState(true); // Start with loading true
   const [error, setError] = useState<string | null>(null);
   const [studentData, setStudentData] = useState<StudentData | null>(null);
 
   // Validate if the token is still valid
   const validateToken = async (): Promise<boolean> => {
-    const savedToken = localStorage.getItem("authToken");
-    const savedRole = localStorage.getItem("authRole") as
-      | "student"
-      | "manager"
-      | null;
+    const savedToken = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+    const savedRole = localStorage.getItem(STORAGE_KEYS.AUTH_ROLE) as RoleType;
 
-    if (!savedToken || !savedRole || savedRole === "student") {
+    if (!savedToken || !savedRole || savedRole === USER_ROLES.STUDENT) {
       return false;
     }
 
     try {
       // Use lightweight validation endpoint instead of fetching submissions
       // This saves 70-90% of validation time (no database query, no data transfer)
-      const response = await fetch(`${API_BASE_URL}/api/v1/auth/validate`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${savedToken}`,
-        },
-      });
-
-      return response.ok;
+      return await authRepository.validateToken(savedToken);
     } catch (error) {
-      console.warn("Token validation failed:", error);
+      console.warn(ERROR_MESSAGES.UNKNOWN, error);
       return false;
     }
   };
@@ -80,15 +73,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   // Load and validate auth state on mount
   useEffect(() => {
     const initAuth = async () => {
-      const savedToken = localStorage.getItem("authToken");
-      const savedRole = localStorage.getItem("authRole") as
-        | "student"
-        | "manager"
-        | null;
-      const savedStudentData = localStorage.getItem("studentData");
+      const savedToken = localStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+      const savedRole = localStorage.getItem(
+        STORAGE_KEYS.AUTH_ROLE
+      ) as RoleType;
+      const savedStudentData = localStorage.getItem(STORAGE_KEYS.STUDENT_DATA);
 
       if (savedToken && savedRole) {
-        if (savedRole === "student") {
+        if (savedRole === USER_ROLES.STUDENT) {
           // Student tokens don't need validation
           setToken(savedToken);
           setRole(savedRole);
@@ -99,7 +91,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
               const studentData = JSON.parse(savedStudentData);
               setStudentData(studentData);
             } catch (error) {
-              console.warn("Failed to parse saved student data");
+              console.warn(ERROR_MESSAGES.FETCH_EXISTING_SUBMISSION_FAILED);
               localStorage.removeItem("studentData");
             }
           }
@@ -111,9 +103,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
             setRole(savedRole);
           } else {
             // Token is invalid, clear it
-            localStorage.removeItem("authToken");
-            localStorage.removeItem("authRole");
-            localStorage.removeItem("studentData");
+            localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+            localStorage.removeItem(STORAGE_KEYS.AUTH_ROLE);
+            localStorage.removeItem(STORAGE_KEYS.STUDENT_DATA);
           }
         }
       }
@@ -128,32 +120,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     setIsLoading(true);
     setError(null);
     try {
-      // Updated to use render backend - v2
-      const response = await fetch(`${API_BASE_URL}/api/v1/auth/manager`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || "Login failed");
-      }
-
-      const data = await response.json();
+      // Use repository to handle authentication
+      const data = await authRepository.loginManager(password);
       setToken(data.token);
       setRole("manager");
 
       // Save to localStorage
-      localStorage.setItem("authToken", data.token);
-      localStorage.setItem("authRole", "manager");
+      localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, data.token);
+      localStorage.setItem(STORAGE_KEYS.AUTH_ROLE, "manager");
 
       // Preload data in background for faster subsequent access
       setTimeout(() => {
         dataPreloader.preloadManagerData(data.token);
       }, 100);
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : "An error occurred";
+      const errorMsg =
+        err instanceof Error ? err.message : ERROR_MESSAGES.UNKNOWN;
       setError(errorMsg);
       throw err;
     } finally {
@@ -162,22 +144,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const selectStudent = () => {
-    setRole("student");
+    setRole(USER_ROLES.STUDENT);
     setToken("student-token"); // Set a placeholder token for students
     setError(null);
+    setStudentData(null); // Clear any previous student data
     // Don't save to localStorage yet - wait for proper authentication
   };
 
   const authenticateStudent = (data: StudentData) => {
     setStudentData(data);
-    setRole("student");
+    setRole(USER_ROLES.STUDENT);
     setToken("student-token");
     setError(null);
 
     // Save to localStorage
-    localStorage.setItem("authRole", "student");
-    localStorage.setItem("authToken", "student-token");
-    localStorage.setItem("studentData", JSON.stringify(data));
+    localStorage.setItem(STORAGE_KEYS.AUTH_ROLE, USER_ROLES.STUDENT);
+    localStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, "student-token");
+    localStorage.setItem(STORAGE_KEYS.STUDENT_DATA, JSON.stringify(data));
   };
 
   const logout = () => {
@@ -185,9 +168,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     setRole(null);
     setError(null);
     setStudentData(null);
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("authRole");
-    localStorage.removeItem("studentData");
+    localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.AUTH_ROLE);
+    localStorage.removeItem(STORAGE_KEYS.STUDENT_DATA);
   };
 
   const clearError = () => {
@@ -215,7 +198,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error(ERROR_MESSAGES.UNKNOWN);
   }
   return context;
 };

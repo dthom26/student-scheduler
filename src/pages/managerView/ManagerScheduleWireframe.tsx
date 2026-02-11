@@ -3,7 +3,8 @@ import "./managerView.css";
 import StudentFilter from "./components/StudentFilter";
 import StudentSchedulesCalendar from "./components/StudentSchedulesCalendar";
 import ScheduleBuilder from "./components/ScheduleBuilder";
-import { fetchSubmissions } from "../../services/api";
+import { submissionRepository } from "../../repositories/SubmissionRepository";
+import { ERROR_MESSAGES } from "../../constants/errors";
 import { useAuth } from "../../context/AuthContext";
 
 type StudentStatus = "available" | "notAvailable" | "class" | "preferred";
@@ -138,7 +139,7 @@ export default function ManagerScheduleWireframe() {
   useEffect(() => {
     const loadSubmissions = async () => {
       if (!token) {
-        setError("No auth token available");
+        setError(ERROR_MESSAGES.NO_AUTH_TOKEN);
         return;
       }
 
@@ -148,14 +149,14 @@ export default function ManagerScheduleWireframe() {
       try {
         // Load all submissions at once, not filtered by location
         // This prevents multiple API calls when switching locations
-        const data = await fetchSubmissions(token);
+        const data = await submissionRepository.getAllSubmissions(token);
         setSubmissions(data);
         setDataLoaded(true);
       } catch (err) {
         const errorMsg =
           err instanceof Error
             ? err.message
-            : "An error occurred while fetching submissions";
+            : ERROR_MESSAGES.FETCHING_SUBMISSIONS_ERROR;
         setError(errorMsg);
       } finally {
         setIsLoading(false);
@@ -269,13 +270,13 @@ export default function ManagerScheduleWireframe() {
     setError(null);
 
     try {
-      const data = await fetchSubmissions(token, undefined, true); // Force refresh
+      const data = await submissionRepository.getAllSubmissions(token, true); // Force refresh
       setSubmissions(data);
     } catch (err) {
       const errorMsg =
         err instanceof Error
           ? err.message
-          : "An error occurred while refreshing data";
+          : ERROR_MESSAGES.REFRESHING_DATA_ERROR;
       setError(errorMsg);
     } finally {
       setIsLoading(false);

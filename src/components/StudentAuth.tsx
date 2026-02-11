@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { getStudentSubmission } from "../services/api";
+import { submissionRepository } from "../repositories/SubmissionRepository";
+import { ERROR_MESSAGES } from "../constants/errors";
+import type { SubmissionResponse } from "../types/submission";
 
 interface StudentAuthProps {
   onStudentAuthenticated: (studentData: {
@@ -7,7 +9,7 @@ interface StudentAuthProps {
     studentName: string;
     location: string;
     isReturning: boolean;
-    existingSubmission?: any;
+    existingSubmission?: SubmissionResponse;
   }) => void;
 }
 
@@ -22,7 +24,7 @@ export default function StudentAuth({
   const [isReturningStudent, setIsReturningStudent] = useState<boolean | null>(
     null
   );
-  const [existingSubmission, setExistingSubmission] = useState<any>(null);
+  const [existingSubmission, setExistingSubmission] = useState<SubmissionResponse | null>(null);
 
   const validateStudentId = (id: string): boolean => {
     // Basic validation - could be enhanced based on your institution's ID format
@@ -36,19 +38,15 @@ export default function StudentAuth({
   const handleNewStudent = () => {
     // Validate inputs
     if (!validateStudentId(studentId)) {
-      setError(
-        "Student ID must be at least 3 characters and contain only letters and numbers"
-      );
+      setError(ERROR_MESSAGES.INVALID_STUDENT_ID);
       return;
     }
     if (!validateStudentName(studentName)) {
-      setError(
-        "Please enter a valid name (letters only, at least 2 characters)"
-      );
+      setError(ERROR_MESSAGES.UNKNOWN);
       return;
     }
     if (!location) {
-      setError("Please select a location");
+      setError(ERROR_MESSAGES.UNKNOWN);
       return;
     }
     setError(null);
@@ -63,9 +61,7 @@ export default function StudentAuth({
 
   const handleReturningStudent = async () => {
     if (!validateStudentId(studentId)) {
-      setError(
-        "Student ID must be at least 3 characters and contain only letters and numbers"
-      );
+      setError(ERROR_MESSAGES.INVALID_STUDENT_ID);
       return;
     }
 
@@ -73,11 +69,9 @@ export default function StudentAuth({
     setError(null);
 
     try {
-      const existingSubmission = await getStudentSubmission(studentId);
+      const existingSubmission = await submissionRepository.fetchSubmissionById(studentId);
       if (!existingSubmission) {
-        setError(
-          "No existing submission found for this Student ID. Please use 'New Student' option."
-        );
+        setError(ERROR_MESSAGES.NO_EXISTING_SUBMISSION);
         setIsLoading(false);
         return;
       }
@@ -87,8 +81,8 @@ export default function StudentAuth({
       setLocation(existingSubmission.location);
       setIsReturningStudent(true);
     } catch (error) {
-      console.error("Error fetching existing submission:", error);
-      setError("Failed to fetch your existing submission. Please try again.");
+      console.error(ERROR_MESSAGES.FETCH_EXISTING_SUBMISSION_FAILED, error);
+      setError(ERROR_MESSAGES.FETCH_EXISTING_SUBMISSION_FAILED);
     } finally {
       setIsLoading(false);
     }
@@ -308,6 +302,10 @@ export default function StudentAuth({
         <button
           onClick={() => {
             setIsReturningStudent(null);
+            setExistingSubmission(null);
+            setStudentId("");
+            setStudentName("");
+            setLocation("");
             setError(null);
           }}
           style={{

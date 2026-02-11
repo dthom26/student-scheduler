@@ -15,7 +15,7 @@ const ManagerScheduleWireframe = lazy(
 );
 
 function App() {
-  const { role, isAuthenticated, isLoading, logout } = useAuth();
+  const { role, isAuthenticated, isLoading, logout, studentData } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -57,10 +57,10 @@ function App() {
           <section className="card">
             {/* Suspense wraps lazy-loaded components and shows fallback while loading */}
             <Suspense fallback={<LoadingView />}>
-              {role === "student" && (
+              {role === "student" && studentData && (
                 <>
                   <h3 style={{ marginTop: 0 }}>Submit Your Availability</h3>
-                  <WeekGridWireframe />
+                  <WeekGridWireframe key={studentData.studentId} />
                 </>
               )}
               {role === "manager" && <ManagerScheduleWireframe />}

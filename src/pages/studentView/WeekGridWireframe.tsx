@@ -6,7 +6,8 @@ import TimeGrid from "./components/TimeGrid";
 import DayPicker from "./components/DayPicker";
 import SingleDayGrid from "./components/SingleDayGrid";
 import { createSubmission } from "../../services/scheduleService";
-import { submitSchedule, updateStudentSchedule } from "../../services/api";
+import { submissionRepository } from "../../repositories/SubmissionRepository";
+import { ERROR_MESSAGES } from "../../constants/errors";
 import { useAuth } from "../../context/AuthContext";
 
 type CellType = keyof typeof cellTypes | null;
@@ -51,14 +52,20 @@ const cellTypes = {
   preferred: { label: "Preferred Shift", color: "#ffd54f" },
 } as const;
 
-const initialGrid: Grid = days.reduce((acc, day) => {
-  acc[day] = getTimesForDay(day).map(() => null);
-  return acc;
-}, {} as Grid);
+// Helper function to create a fresh empty grid
+const createEmptyGrid = (): Grid => {
+  return days.reduce((acc, day) => {
+    acc[day] = getTimesForDay(day).map(() => null);
+    return acc;
+  }, {} as Grid);
+};
 
 export default function WeekGridWireframe() {
   const { studentData } = useAuth();
-  const [grid, setGrid] = useState<Grid>(initialGrid);
+  
+  console.log('🏗️ WeekGridWireframe RENDER with studentData:', studentData?.studentId);
+  
+  const [grid, setGrid] = useState<Grid>(createEmptyGrid);
   const [mode, setMode] = useState<keyof typeof cellTypes>("available");
   const [studentId, setStudentId] = useState("");
   const [studentName, setStudentName] = useState("");
@@ -85,6 +92,13 @@ export default function WeekGridWireframe() {
 
   // Initialize with authenticated student data
   useEffect(() => {
+    console.log('🔍 WeekGridWireframe useEffect fired:', { 
+      studentData, 
+      hasStudentData: !!studentData,
+      studentId: studentData?.studentId,
+      hasExistingSubmission: !!studentData?.existingSubmission 
+    });
+    
     if (studentData) {
       setStudentId(studentData.studentId);
       setStudentName(studentData.studentName);
@@ -96,7 +110,7 @@ export default function WeekGridWireframe() {
         setNotes(studentData.existingSubmission.notes || "");
 
         // Convert the schedule back to grid format
-        const newGrid: Grid = { ...initialGrid };
+        const newGrid: Grid = createEmptyGrid();
         studentData.existingSubmission.schedule.forEach(
           (slot: { day: Day; time: string; type: string }) => {
             const dayTimes = getTimesForDay(slot.day);
@@ -108,9 +122,30 @@ export default function WeekGridWireframe() {
           }
         );
         setGrid(newGrid);
+      } else {
+        // New student - clear grid and notes
+        setGrid(createEmptyGrid());
+        setNotes("");
       }
+    } else {
+      // No student data - clear all state (when logged out or switching students)
+      setStudentId("");
+      setStudentName("");
+      setLocation("");
+      setGrid(createEmptyGrid());
+      setNotes("");
+      setIsUpdate(false);
+      setHasExistingSubmission(false);
     }
   }, [studentData]);
+  
+  // Track mount/unmount
+  useEffect(() => {
+    console.log('✅ WeekGridWireframe MOUNTED for student:', studentData?.studentId);
+    return () => {
+      console.log('❌ WeekGridWireframe UNMOUNTING for student:', studentData?.studentId);
+    };
+  }, []);
 
   const handleDragStart = (day: Day, idx: number) => {
     // Clear any existing timer
@@ -354,11 +389,11 @@ export default function WeekGridWireframe() {
     try {
       let result;
       if (isUpdate) {
-        result = await updateStudentSchedule(studentId, submission);
+        result = await submissionRepository.updateSubmission(studentId, submission);
         console.log("Update successful:", result);
         alert("Schedule updated successfully!");
       } else {
-        result = await submitSchedule(submission);
+        result = await submissionRepository.submitSchedule(submission);
         console.log("Submission successful:", result);
         alert("Schedule submitted successfully!");
       }
@@ -375,7 +410,7 @@ export default function WeekGridWireframe() {
         setHasExistingSubmission(true);
       }
     } catch (error) {
-      console.error("Submission failed:", error);
+      console.error(ERROR_MESSAGES.SUBMIT_FAILED, error);
 
       // Check if it's a duplicate submission error
       const errorMessage =
@@ -384,11 +419,9 @@ export default function WeekGridWireframe() {
         errorMessage.includes("already exists") ||
         errorMessage.includes("409")
       ) {
-        alert(
-          `This student ID already has a submission. Please use the "Returning Student" option to update your schedule.`
-        );
+        alert(ERROR_MESSAGES.NO_EXISTING_SUBMISSION);
       } else {
-        alert(`Failed to ${isUpdate ? "update" : "submit"}. Please try again.`);
+        alert(ERROR_MESSAGES.SUBMIT_FAILED);
       }
     }
   };
@@ -463,7 +496,7 @@ export default function WeekGridWireframe() {
 
       <div className="sidebar-right">
         <div>
-          <button onClick={() => setGrid(initialGrid)}>Clear</button>{" "}
+          <button onClick={() => setGrid(createEmptyGrid())}>Clear</button>{" "}
           <button disabled={!canSubmit || isLoading} onClick={handleSubmit}>
             {isLoading
               ? "Loading..."

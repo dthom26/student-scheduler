@@ -1,4 +1,4 @@
-import { fetchSubmissions } from "./api";
+import { submissionRepository } from "../repositories/SubmissionRepository";
 
 /**
  * Preload data for faster manager experience
@@ -18,7 +18,7 @@ export class DataPreloader {
 
     try {
       // Preload submissions in background after successful manager login
-      await fetchSubmissions(token);
+      await submissionRepository.getAllSubmissions(token);
     } catch (error) {
       console.warn("Data preload failed:", error);
       // Don't throw error - this is just a performance optimization

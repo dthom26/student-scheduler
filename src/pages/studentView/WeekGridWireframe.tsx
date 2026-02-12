@@ -62,9 +62,12 @@ const createEmptyGrid = (): Grid => {
 
 export default function WeekGridWireframe() {
   const { studentData } = useAuth();
-  
-  console.log('🏗️ WeekGridWireframe RENDER with studentData:', studentData?.studentId);
-  
+
+  console.log(
+    "🏗️ WeekGridWireframe RENDER with studentData:",
+    studentData?.studentId,
+  );
+
   const [grid, setGrid] = useState<Grid>(createEmptyGrid);
   const [mode, setMode] = useState<keyof typeof cellTypes>("available");
   const [studentId, setStudentId] = useState("");
@@ -78,7 +81,7 @@ export default function WeekGridWireframe() {
     idx: number;
   } | null>(null);
   const [dragEnd, setDragEnd] = useState<{ day: Day; idx: number } | null>(
-    null
+    null,
   );
   const [dragTimer, setDragTimer] = useState<number | null>(null);
   const [isAdjustingRange, setIsAdjustingRange] = useState(false);
@@ -92,13 +95,13 @@ export default function WeekGridWireframe() {
 
   // Initialize with authenticated student data
   useEffect(() => {
-    console.log('🔍 WeekGridWireframe useEffect fired:', { 
-      studentData, 
+    console.log("🔍 WeekGridWireframe useEffect fired:", {
+      studentData,
       hasStudentData: !!studentData,
       studentId: studentData?.studentId,
-      hasExistingSubmission: !!studentData?.existingSubmission 
+      hasExistingSubmission: !!studentData?.existingSubmission,
     });
-    
+
     if (studentData) {
       setStudentId(studentData.studentId);
       setStudentName(studentData.studentName);
@@ -119,7 +122,7 @@ export default function WeekGridWireframe() {
               newGrid[slot.day][timeIndex] =
                 slot.type as keyof typeof cellTypes;
             }
-          }
+          },
         );
         setGrid(newGrid);
       } else {
@@ -138,12 +141,18 @@ export default function WeekGridWireframe() {
       setHasExistingSubmission(false);
     }
   }, [studentData]);
-  
+
   // Track mount/unmount
   useEffect(() => {
-    console.log('✅ WeekGridWireframe MOUNTED for student:', studentData?.studentId);
+    console.log(
+      "✅ WeekGridWireframe MOUNTED for student:",
+      studentData?.studentId,
+    );
     return () => {
-      console.log('❌ WeekGridWireframe UNMOUNTING for student:', studentData?.studentId);
+      console.log(
+        "❌ WeekGridWireframe UNMOUNTING for student:",
+        studentData?.studentId,
+      );
     };
   }, []);
 
@@ -232,14 +241,14 @@ export default function WeekGridWireframe() {
           if (originalBoundary) {
             const oldIndices = getRange(
               originalBoundary.rangeStart!,
-              originalBoundary.rangeEnd!
+              originalBoundary.rangeEnd!,
             );
 
             // First clear the old range
             setGrid((prev) => ({
               ...prev,
               [startDay]: prev[startDay].map((val, i) =>
-                oldIndices.includes(i) ? null : val
+                oldIndices.includes(i) ? null : val,
               ),
             }));
 
@@ -248,7 +257,7 @@ export default function WeekGridWireframe() {
               setGrid((prev) => ({
                 ...prev,
                 [startDay]: prev[startDay].map((val, i) =>
-                  newIndices.includes(i) ? mode : val
+                  newIndices.includes(i) ? mode : val,
                 ),
               }));
             }, 0);
@@ -259,7 +268,7 @@ export default function WeekGridWireframe() {
           setGrid((prev) => ({
             ...prev,
             [startDay]: prev[startDay].map((val, i) =>
-              indices.includes(i) ? mode : val
+              indices.includes(i) ? mode : val,
             ),
           }));
         }
@@ -298,7 +307,7 @@ export default function WeekGridWireframe() {
   // Find if a cell is at the boundary of an existing range
   const findRangeBoundary = (
     day: Day,
-    idx: number
+    idx: number,
   ): {
     isStart: boolean;
     isEnd: boolean;
@@ -366,7 +375,7 @@ export default function WeekGridWireframe() {
     setGrid((prev) => ({
       ...prev,
       [day]: prev[day].map((val, i) =>
-        i === idx ? (val === null ? mode : null) : val
+        i === idx ? (val === null ? mode : null) : val,
       ),
     }));
   };
@@ -383,13 +392,16 @@ export default function WeekGridWireframe() {
       studentName,
       location,
       notes,
-      cellTypes
+      cellTypes,
     );
 
     try {
       let result;
       if (isUpdate) {
-        result = await submissionRepository.updateSubmission(studentId, submission);
+        result = await submissionRepository.updateSubmission(
+          studentId,
+          submission,
+        );
         console.log("Update successful:", result);
         alert("Schedule updated successfully!");
       } else {
@@ -400,7 +412,7 @@ export default function WeekGridWireframe() {
 
       // Don't reset the form after successful update, but do after new submission
       if (!isUpdate) {
-        setGrid(initialGrid);
+        setGrid(createEmptyGrid());
         setStudentId("");
         setStudentName("");
         setLocation("");

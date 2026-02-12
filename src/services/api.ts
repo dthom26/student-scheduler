@@ -1,6 +1,5 @@
 import type { ScheduleSubmission } from "../types/submission";
 import { submissionCache } from "./cache";
-import { API_BASE_URL } from "../constants/api";
 import { ERROR_MESSAGES } from "../constants/errors";
 import { http } from "./httpClient";
 

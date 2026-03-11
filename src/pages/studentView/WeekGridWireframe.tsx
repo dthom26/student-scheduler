@@ -400,7 +400,7 @@ export default function WeekGridWireframe() {
 
       // Don't reset the form after successful update, but do after new submission
       if (!isUpdate) {
-        setGrid(initialGrid);
+        setGrid(createEmptyGrid());
         setStudentId("");
         setStudentName("");
         setLocation("");

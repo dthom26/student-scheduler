@@ -4,7 +4,7 @@ import { ERROR_MESSAGES } from "../constants/errors";
 import { http } from "./httpClient";
 
 export async function submitSchedule(
-  payload: ScheduleSubmission
+  payload: ScheduleSubmission,
 ): Promise<any> {
   // Validate input
   if (
@@ -35,7 +35,7 @@ export async function submitSchedule(
 export async function fetchSubmissions(
   token: string,
   location?: string,
-  forceRefresh = false
+  forceRefresh = false,
 ): Promise<any[]> {
   if (!token) {
     throw new Error(ERROR_MESSAGES.AUTH_TOKEN_REQUIRED);
@@ -83,7 +83,7 @@ export async function getStudentSubmission(studentId: string): Promise<any> {
 
 export async function updateStudentSchedule(
   studentId: string,
-  payload: ScheduleSubmission
+  payload: ScheduleSubmission,
 ): Promise<any> {
   // Validate input
   if (

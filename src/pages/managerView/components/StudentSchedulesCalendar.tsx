@@ -5,6 +5,7 @@ type Day = "Mon" | "Tue" | "Wed" | "Thu" | "Fri";
 
 import "./StudentSchedulesCalendar.css";
 
+
 function formatTimeTo12Hour(time24: string): string {
   const [hours, minutes] = time24.split(":");
   const hour = parseInt(hours, 10);
@@ -97,6 +98,7 @@ const StudentSchedulesCalendar = memo(function StudentSchedulesCalendar({
   cellTypes,
   selectedTypes = [],
 }: Props) {
+  
   // Memoize expensive calculations (before any early returns)
   const displayStudents = useMemo(() => {
     return selectedStudents
@@ -199,6 +201,7 @@ const StudentSchedulesCalendar = memo(function StudentSchedulesCalendar({
       {/* Calendar Header with Days */}
       <div className="calendar-header">
         <div className="time-col-header"></div>
+        
         {days.map((day) => (
           <div key={day} className="day-col-header">
             <div className="day-name">{day}</div>
@@ -375,6 +378,7 @@ const StudentSchedulesCalendar = memo(function StudentSchedulesCalendar({
           </div>
         ))}
       </div>
+      
     </div>
   );
 });

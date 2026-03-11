@@ -9,6 +9,7 @@ import { createSubmission } from "../../services/scheduleService";
 import { submissionRepository } from "../../repositories/SubmissionRepository";
 import { ERROR_MESSAGES } from "../../constants/errors";
 import { useAuth } from "../../context/AuthContext";
+import { useToast } from "../../context/ToastContext";
 
 type CellType = keyof typeof cellTypes | null;
 type Day = "Mon" | "Tue" | "Wed" | "Thu" | "Fri";
@@ -62,6 +63,7 @@ const createEmptyGrid = (): Grid => {
 
 export default function WeekGridWireframe() {
   const { studentData } = useAuth();
+  const toast = useToast();
 
   console.log(
     "🏗️ WeekGridWireframe RENDER with studentData:",
@@ -397,17 +399,17 @@ export default function WeekGridWireframe() {
 
     try {
       let result;
-      if (isUpdate) {
+        if (isUpdate) {
         result = await submissionRepository.updateSubmission(
           studentId,
           submission,
         );
         console.log("Update successful:", result);
-        alert("Schedule updated successfully!");
+        toast.success("Schedule updated successfully!");
       } else {
         result = await submissionRepository.submitSchedule(submission);
         console.log("Submission successful:", result);
-        alert("Schedule submitted successfully!");
+        toast.success("Schedule submitted successfully!");
       }
 
       // Don't reset the form after successful update, but do after new submission
@@ -431,9 +433,9 @@ export default function WeekGridWireframe() {
         errorMessage.includes("already exists") ||
         errorMessage.includes("409")
       ) {
-        alert(ERROR_MESSAGES.NO_EXISTING_SUBMISSION);
+        toast.error(ERROR_MESSAGES.NO_EXISTING_SUBMISSION);
       } else {
-        alert(ERROR_MESSAGES.SUBMIT_FAILED);
+        toast.error(ERROR_MESSAGES.SUBMIT_FAILED);
       }
     }
   };

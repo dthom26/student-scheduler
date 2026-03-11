@@ -77,3 +77,44 @@ export const updateSubmission = async (req, res, next) => {
     next(error);
   }
 };
+
+export const deleteSubmissionByStudentId = async (req, res, next) => {
+  try {
+    const { studentId } = req.params;
+    if (!studentId) {
+      return res.status(400).json({ message: "Student ID is required." });
+    }
+    // Find by the studentId field (not the Mongo _id)
+    const deleted = await Submission.findOneAndDelete({ studentId });
+    if (!deleted) {
+      return res.status(404).json({ message: "Submission not found" });
+    }
+
+    // Optionally log the manager performing the deletion (req.user set by middleware)
+    if (req.user) {
+      console.log(`Manager ${req.user.sub || req.user.email || req.user.id} deleted submission for studentId=${studentId}`);
+    }
+
+    return res.status(200).json({ message: "Submission deleted", studentId });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const clearSubmissionSchedule = async (req, res, next) => {
+  try {
+    const { studentId } = req.params;
+    if (!studentId) return res.status(400).json({ message: "studentId required" });
+
+    const updated = await Submission.findOneAndUpdate(
+      { studentId },
+      { $set: { schedule: [] } },
+      { new: true }
+    );
+    if (!updated) return res.status(404).json({ message: "Submission not found" });
+
+    res.status(200).json({ message: "Schedule cleared", submission: updated });
+  } catch (error) {
+    next(error);
+  }
+};

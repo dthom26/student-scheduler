@@ -231,6 +231,45 @@ export class SubmissionRepository {
       }),
     });
   }
+
+  /**
+   * Clear a student's schedule but keep the submission record (manager-only)
+   * @param studentId - The student identifier
+   * @param token - Manager auth token
+   * @returns The updated submission
+   */
+  async clearSchedule(
+    studentId: string,
+    token: string
+  ): Promise<SubmissionResponse> {
+    if (!token) {
+      throw new Error(ERROR_MESSAGES.AUTH_TOKEN_REQUIRED);
+    }
+
+    return http<SubmissionResponse>(`/api/v1/submissions/${studentId}/schedule`, {
+      method: "DELETE",
+      authToken: token,
+    });
+  }
+
+  /**
+   * Delete a student's submission document entirely (manager-only)
+   * @param studentId - The student identifier
+   * @param token - Manager auth token
+   */
+  async deleteSubmission(studentId: string, token: string): Promise<void> {
+    if (!token) {
+      throw new Error(ERROR_MESSAGES.AUTH_TOKEN_REQUIRED);
+    }
+
+    await http<void>(`/api/v1/submissions/${studentId}`, {
+      method: "DELETE",
+      authToken: token,
+    });
+
+    // Invalidate cache after a destructive change
+    this.clearCache();
+  }
 }
 
 /**

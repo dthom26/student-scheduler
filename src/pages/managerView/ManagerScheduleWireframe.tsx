@@ -283,6 +283,39 @@ export default function ManagerScheduleWireframe() {
     }
   };
 
+  // Optimistic handlers for child components
+  const clearScheduleOptimistic = async (studentId: string) => {
+    if (!token) throw new Error(ERROR_MESSAGES.NO_AUTH_TOKEN);
+    const prev = submissions;
+    const next = submissions.map((s) =>
+      s.studentId === studentId ? { ...s, schedule: [] } : s
+    );
+    setSubmissions(next);
+
+    try {
+      await submissionRepository.clearSchedule(studentId, token);
+      // keep local state; repository may clear cache internally
+    } catch (err) {
+      // rollback
+      setSubmissions(prev);
+      throw err;
+    }
+  };
+
+  const deleteSubmissionOptimistic = async (studentId: string) => {
+    if (!token) throw new Error(ERROR_MESSAGES.NO_AUTH_TOKEN);
+    const prev = submissions;
+    const next = submissions.filter((s) => s.studentId !== studentId);
+    setSubmissions(next);
+
+    try {
+      await submissionRepository.deleteSubmission(studentId, token);
+    } catch (err) {
+      setSubmissions(prev);
+      throw err;
+    }
+  };
+
   return (
     <div className="manager-root">
       {isLoading && !dataLoaded && (
@@ -345,10 +378,12 @@ export default function ManagerScheduleWireframe() {
             <StudentFilter
               location={location}
               selectedStudents={selectedStudents}
-              onStudentToggle={handleStudentToggle}
+                onStudentToggle={handleStudentToggle}
               students={displayedStudents}
               cellTypes={cellTypes}
               onTypeFilterChange={onTypeFilterChange}
+                onClearScheduleOptimistic={clearScheduleOptimistic}
+                onDeleteSubmissionOptimistic={deleteSubmissionOptimistic}
             />
 
             <div className="manager-main">

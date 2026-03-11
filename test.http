@@ -1,0 +1,13 @@
+### Delete full submission (manager-only)
+DELETE http://localhost:3001/api/v1/submissions/{{studentId}}
+Authorization: Bearer <manager-token>
+
+
+### Clear only schedule (manager-only)
+DELETE http://localhost:3001/api/v1/submissions/{{studentId}}/schedule
+Authorization: Bearer <manager-token>
+
+
+### Get submission (for verification)
+GET http://localhost:3001/api/v1/submissions/{{studentId}}
+Authorization: Bearer <manager-token>

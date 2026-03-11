@@ -197,6 +197,79 @@
   flex: 1;
 }
 
+/* Icon button + tooltip for manager actions in sidebar */
+.student-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+}
+
+.icon-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  color: #4a5568;
+  transition: background 0.12s ease, transform 0.12s ease;
+  min-width: 36px;
+  min-height: 36px;
+}
+
+.icon-btn:hover {
+  background: #f1f5f9;
+  transform: translateY(-1px);
+}
+
+.icon-btn.danger {
+  color: #c53030;
+}
+
+.icon-svg {
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+}
+
+.icon-svg {
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.6;
+}
+
+.icon-btn.danger .icon-svg {
+  stroke: #c53030;
+}
+
+.icon-tooltip {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(100% + 8px);
+  background: #111827;
+  color: #fff;
+  padding: 6px 8px;
+  font-size: 12px;
+  border-radius: 4px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  transform-origin: bottom center;
+  z-index: 30;
+}
+
+.icon-btn:hover .icon-tooltip,
+.icon-btn:focus .icon-tooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
 /* Legend Section */
 .legend-section {
   margin-top: 24px;

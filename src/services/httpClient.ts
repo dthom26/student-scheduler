@@ -4,6 +4,8 @@ export interface HttpOptions extends RequestInit {
   authToken?: string;
 }
 
+const REQUEST_TIMEOUT_MS = 20_000;
+
 export async function http<T>(
   endpoint: string,
   options: HttpOptions = {}
@@ -16,14 +18,28 @@ export async function http<T>(
   // eslint-disable-next-line no-console
   console.debug("http request", options.method || "GET", fullUrl);
 
-  const response = await fetch(fullUrl, {
-    ...rest,
-    headers: {
-      "Content-Type": "application/json",
-      ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
-      ...headers,
-    },
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  let response: Response;
+  try {
+    response = await fetch(fullUrl, {
+      ...rest,
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        ...headers,
+      },
+    });
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      throw new Error(`Request timed out after ${REQUEST_TIMEOUT_MS / 1000}s (url: ${fullUrl})`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   if (!response.ok) {
     const errorText = await response.text().catch(() => null);

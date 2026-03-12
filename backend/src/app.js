@@ -33,11 +33,23 @@ app.get("/", (req, res) => {
   res.send("Student Scheduler Backend is running!");
 });
 
+app.get("/ping", (_req, res) => {
+  res.status(200).json({ ok: true });
+});
+
 app.use(errorMiddleware);
 
-app.listen(PORT, async () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-  await connectDB();
-});
+// Connect to DB first, then start listening so no requests are
+// accepted before the database is ready.
+connectDB()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Server is running on http://localhost:${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("Failed to connect to MongoDB:", err);
+    process.exit(1);
+  });
 
 export default app;

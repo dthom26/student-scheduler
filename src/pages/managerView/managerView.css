@@ -50,10 +50,36 @@
 
 .manager-content {
   display: flex;
+  flex-direction: column;
   flex: 1;
   gap: 24px;
   padding: 20px;
   background: #f7fafc;
+}
+
+/* Each panel row: sidebar card + content card side by side */
+.manager-panel {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  width: 100%;
+}
+
+/* Right-hand content card inside a panel (used by the calendar panel) */
+.manager-panel-body {
+  flex: 1;
+  min-width: 0;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 24px;
+}
+
+.manager-panel-title {
+  margin: 0 0 20px 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a202c;
 }
 
 .manager-sidebar {
@@ -334,150 +360,251 @@
 
 /* Schedule Builder Styles */
 .schedule-builder {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
 }
 
-.schedule-builder h3 {
-  margin: 0 0 20px 0;
-  font-size: 18px;
+.sb-sidebar-title {
+  margin: 0 0 16px 0;
+  font-size: 16px;
   font-weight: 700;
   color: #1a202c;
 }
 
-.assignment-selector {
-  margin-bottom: 16px;
-}
-
-.assignment-label {
+/* Sidebar + grid two-column layout */
+.schedule-builder-layout {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #1a202c;
-  font-weight: 500;
+  gap: 16px;
+  align-items: flex-start;
 }
 
-.assignment-select {
-  padding: 6px 10px;
+.schedule-builder-sidebar {
+  width: 200px;
+  flex-shrink: 0;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  max-height: 880px;
+}
+
+.sb-sidebar-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sb-sidebar-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #718096;
+  margin-bottom: 2px;
+}
+
+.sb-select-full {
+  width: 100%;
+  padding: 6px 8px;
   border: 1px solid var(--border);
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 13px;
   background: #ffffff;
   cursor: pointer;
 }
 
-/* Assignment Grid Container with Student Column */
-.assignment-grid-container {
-  display: flex;
-  gap: 16px;
-  margin-top: 16px;
-}
-
-.assignment-student-column {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.assignment-student-header {
-  height: 40px;
-  display: flex;
-  align-items: center;
-  font-weight: 700;
-  color: #1a202c;
-  font-size: 14px;
-  padding: 0 8px;
-  margin-bottom: 8px;
-}
-
-.assignment-student-name {
-  height: 32px;
+.sb-student-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 12px;
-  background: #f7fafc;
+  padding: 6px 8px;
+  background: #ffffff;
   border-radius: 4px;
   border-left: 4px solid;
   font-size: 13px;
   color: #2d3748;
   white-space: nowrap;
-  min-width: 180px;
+  cursor: pointer;
+  transition: background 0.12s ease;
 }
 
-.student-name-text {
+.sb-student-row:hover {
+  background: #edf2f7;
+}
+
+.sb-student-row--active {
+  background: #ebf8ff;
+  outline: 1px solid #90cdf4;
+}
+
+.sb-student-name {
   font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.student-hours {
+.sb-student-hours {
   font-weight: 700;
   color: #4a5568;
   margin-left: 8px;
+  flex-shrink: 0;
 }
 
 .assignment-grid-wrapper {
   flex: 1;
-  overflow-x: auto;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background: #ffffff;
 }
 
-.assignment-grid-header {
+/* During drag, blocks must not intercept pointer events so
+   document.elementFromPoint can reach the underlying slots */
+.assignment-grid-wrapper.is-dragging .assignment-block {
+  pointer-events: none !important;
+}
+
+/* Column-based grid — one column per day, matching StudentSchedulesCalendar */
+.assignment-grid {
+  display: grid;
+  grid-template-columns: 80px repeat(5, 1fr);
+}
+
+.assignment-time-col {
   display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
+  flex-direction: column;
+  background: #f7fafc;
+  border-right: 1px solid #e2e8f0;
 }
 
 .assignment-time-header {
-  width: 60px;
+  height: 44px;
   flex-shrink: 0;
-}
-
-.assignment-day-header {
-  width: 80px;
-  text-align: center;
-  font-weight: bold;
-  color: #1a202c;
-}
-
-.assignment-grid-row {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
+  background: #f7fafc;
+  border-bottom: 2px solid #e2e8f0;
+  box-sizing: border-box;
 }
 
 .assignment-time-cell {
-  width: 60px;
-  text-align: right;
-  font-size: 12px;
-  color: #4a5568;
+  height: 40px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  padding: 0 4px;
+  padding: 0 8px;
+  font-size: 12px;
+  color: #718096;
+  background: #f7fafc;
+  border-bottom: 1px solid #e2e8f0;
+  box-sizing: border-box;
 }
 
-.assignment-cell {
-  width: 80px;
-  height: 32px;
-  border: 1px solid #ccc;
-  cursor: pointer;
-  position: relative;
+.assignment-day-col {
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid #e2e8f0;
+  min-width: 0;
+}
+
+.assignment-day-header {
+  height: 44px;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  color: #1a202c;
+  background: #ffffff;
+  border-bottom: 2px solid #e2e8f0;
+  box-sizing: border-box;
+}
+
+/* Day body: relative so blocks can be absolutely positioned */
+.assignment-day-body {
+  position: relative;
+  flex: 1;
+}
+
+/* Background slots — interaction hit targets + border grid lines */
+.assignment-slot {
+  height: 40px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #ffffff;
+  cursor: crosshair;
+  box-sizing: border-box;
+}
+
+.assignment-slot.empty {
+  background: #f7fafc;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Assignment block (matches .schedule-event in StudentSchedulesCalendar) */
+.assignment-block {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-left: 4px solid;
+  padding: 5px 6px;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  font-size: 12px;
+  cursor: pointer;
+  box-sizing: border-box;
+  z-index: 2;
+  transition: box-shadow 0.15s ease;
+}
+
+.assignment-block:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.assignment-block-name {
+  font-weight: 600;
+  color: #1a202c;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 12px;
+}
+
+.assignment-block-info {
   font-size: 11px;
+  color: #4a5568;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.assignment-tooltip {
+  position: fixed;
+  background: #1a202c;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: pre-line;
+  z-index: 9999;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
   font-weight: 500;
-  border-radius: 4px;
-  transition: opacity 0.2s ease;
+  line-height: 1.6;
+  min-width: 140px;
+  text-align: center;
 }
 
-.assignment-cell:hover {
-  opacity: 0.8;
-}
-
-.assignment-cell.empty {
-  background: transparent;
-  border: none;
+.assignment-block-preview {
   cursor: default;
 }
 
@@ -522,19 +649,26 @@
 }
 
 @media (max-width: 900px) {
-  .manager-content {
+  .manager-panel {
     flex-direction: column;
-    gap: 16px;
   }
 
   .manager-sidebar {
     width: 100%;
     max-height: none;
-    margin-bottom: 0;
   }
 
-  .manager-main {
+  .manager-panel-body {
     width: 100%;
+  }
+
+  .schedule-builder-sidebar {
+    width: 100% !important;
+    max-height: none;
+  }
+
+  .schedule-builder-layout {
+    flex-direction: column;
   }
 
   .time-col,

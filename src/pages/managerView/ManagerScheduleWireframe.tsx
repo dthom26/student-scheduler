@@ -93,47 +93,33 @@ export default function ManagerScheduleWireframe() {
     );
   };
 
-  const handleCellAssign = (day: Day, timeIdx: number) => {
-    const times_arr = [
-      "08:00",
-      "08:30",
-      "09:00",
-      "09:30",
-      "10:00",
-      "10:30",
-      "11:00",
-      "11:30",
-      "12:00",
-      "12:30",
-      "13:00",
-      "13:30",
-      "14:00",
-      "14:30",
-      "15:00",
-      "15:30",
-      "16:00",
-      "16:30",
-      "17:00",
-      "17:30",
-      "18:00",
-    ];
-    const slotTime = times_arr[timeIdx];
-    const assignedIdx = assignments.findIndex(
-      (a) => a.day === day && a.time === slotTime
-    );
-    if (assignedIdx !== -1) {
-      setAssignments((prev) => prev.filter((_, i) => i !== assignedIdx));
-      return;
-    }
-    if (!selectedAssignmentStudent) return;
-    setAssignments((prev) => [
-      ...prev,
-      {
-        studentId: selectedAssignmentStudent,
-        day,
-        time: slotTime,
-      },
-    ]);
+  const handleRangeAssign = (
+    day: Day,
+    startIdx: number,
+    endIdx: number,
+    studentId: string | null
+  ) => {
+    setAssignments((prev) => {
+      // Always clear the range first
+      const next = prev.filter((a) => {
+        if (a.day !== day) return true;
+        const idx = times.indexOf(a.time);
+        if (idx === -1) return true;
+        return idx < startIdx || idx > endIdx;
+      });
+
+      // null = unassign only
+      if (!studentId) return next;
+
+      const additions: Assignment[] = [];
+      for (let i = startIdx; i <= endIdx; i++) {
+        const t = times[i];
+        if (!t) continue;
+        additions.push({ studentId, day, time: t });
+      }
+
+      return [...next, ...additions];
+    });
   };
 
   useEffect(() => {
@@ -375,20 +361,20 @@ export default function ManagerScheduleWireframe() {
           </header>
 
           <div className="manager-content">
-            <StudentFilter
-              location={location}
-              selectedStudents={selectedStudents}
+            {/* Panel 1: availability calendar */}
+            <div className="manager-panel">
+              <StudentFilter
+                location={location}
+                selectedStudents={selectedStudents}
                 onStudentToggle={handleStudentToggle}
-              students={displayedStudents}
-              cellTypes={cellTypes}
-              onTypeFilterChange={onTypeFilterChange}
+                students={displayedStudents}
+                cellTypes={cellTypes}
+                onTypeFilterChange={onTypeFilterChange}
                 onClearScheduleOptimistic={clearScheduleOptimistic}
                 onDeleteSubmissionOptimistic={deleteSubmissionOptimistic}
-            />
-
-            <div className="manager-main">
-              <section className="manager-section">
-                <h3>Student Schedules</h3>
+              />
+              <div className="manager-panel-body">
+                <h3 className="manager-panel-title">Student Schedules</h3>
                 <StudentSchedulesCalendar
                   days={days}
                   students={displayedStudents}
@@ -397,20 +383,21 @@ export default function ManagerScheduleWireframe() {
                   cellTypes={cellTypes}
                   selectedTypes={selectedAvailabilityTypes}
                 />
-              </section>
+              </div>
+            </div>
 
-              <section className="manager-section">
-                <ScheduleBuilder
-                  days={days}
-                  times={times}
-                  students={displayedStudents}
-                  location={location}
-                  assignments={assignments}
-                  selectedAssignmentStudent={selectedAssignmentStudent}
-                  onAssignmentStudentChange={setSelectedAssignmentStudent}
-                  onCellAssign={handleCellAssign}
-                />
-              </section>
+            {/* Panel 2: assignment builder — ScheduleBuilder renders its own sidebar + grid */}
+            <div className="manager-panel">
+              <ScheduleBuilder
+                days={days}
+                times={times}
+                students={displayedStudents}
+                location={location}
+                assignments={assignments}
+                selectedAssignmentStudent={selectedAssignmentStudent}
+                onAssignmentStudentChange={setSelectedAssignmentStudent}
+                onRangeAssign={handleRangeAssign}
+              />
             </div>
           </div>
         </>

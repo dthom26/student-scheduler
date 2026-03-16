@@ -143,8 +143,7 @@ export default function WeekGridWireframe() {
             const dayTimes = getTimesForDay(slot.day);
             const timeIndex = dayTimes.indexOf(slot.time);
             if (timeIndex !== -1) {
-              newGrid[slot.day][timeIndex] =
-                slot.type as keyof typeof cellTypes;
+              newGrid[slot.day][timeIndex] = slot.type;
             }
           },
         );

@@ -2,8 +2,7 @@
 import type { ScheduleSlot, ScheduleSubmission } from "../types/submission";
 
 type Day = "Mon" | "Tue" | "Wed" | "Thu" | "Fri";
-type CellTypeKey = "available" | "notAvailable" | "class" | "preferred";
-type Grid = Record<Day, (CellTypeKey | null)[]>;
+type Grid = Record<Day, (string | null)[]>;
 
 export function gridToScheduleSlots(
   grid: Grid,

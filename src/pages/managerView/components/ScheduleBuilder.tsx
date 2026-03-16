@@ -70,6 +70,12 @@ interface Props {
     endIdx: number,
     studentId: string | null
   ) => void;
+  activeDraftName?: string | null;
+  onOpenDrafts?: () => void;
+  onOpenRules?: () => void;
+  onGenerateSuggestion?: () => Promise<void>;
+  isGenerating?: boolean;
+  onClearAll?: () => void;
 }
 
 function getTimesForDay(day: Day): string[] {
@@ -126,6 +132,12 @@ export default function ScheduleBuilder({
   selectedAssignmentStudent,
   onAssignmentStudentChange,
   onRangeAssign,
+  activeDraftName,
+  onOpenDrafts,
+  onOpenRules,
+  onGenerateSuggestion,
+  isGenerating = false,
+  onClearAll,
 }: Props) {
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [tooltip, setTooltip] = useState<{ text: string; x: number; y: number } | null>(null);
@@ -216,6 +228,38 @@ export default function ScheduleBuilder({
 
   return (
     <div className="schedule-builder">
+      <div className="sb-draft-bar">
+        <span className="sb-draft-status">
+          {activeDraftName ? (
+            <>
+              Draft: <strong>{activeDraftName}</strong>
+            </>
+          ) : (
+            <span className="sb-draft-unsaved">Unsaved</span>
+          )}
+        </span>
+        <div className="sb-draft-actions">
+          {onGenerateSuggestion && (
+            <button
+              className="sb-suggest-btn"
+              onClick={onGenerateSuggestion}
+              disabled={isGenerating}
+            >
+              {isGenerating ? "Generating…" : "✨ Suggest Schedule"}
+            </button>
+          )}
+          {onOpenRules && (
+            <button className="sb-draft-btn" onClick={onOpenRules}>
+              Rules
+            </button>
+          )}
+          {onOpenDrafts && (
+            <button className="sb-draft-btn" onClick={onOpenDrafts}>
+              Drafts
+            </button>
+          )}
+        </div>
+      </div>
       <div className="schedule-builder-layout">
         {/* Sidebar */}
         <div className="schedule-builder-sidebar">
@@ -251,6 +295,14 @@ export default function ScheduleBuilder({
               </div>
             ))}
           </div>
+
+          {onClearAll && (
+            <div className="sb-sidebar-section">
+              <button className="sb-clear-all-btn" onClick={onClearAll}>
+                Clear All
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Time grid â€” column-based, matching StudentSchedulesCalendar */}

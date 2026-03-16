@@ -1,5 +1,5 @@
 type Day = "Mon" | "Tue" | "Wed" | "Thu" | "Fri";
-type StudentStatus = "available" | "notAvailable" | "class" | "preferred";
+type StudentStatus = string;
 
 function formatTimeTo12Hour(time24: string): string {
   const [hours, minutes] = time24.split(":");
@@ -69,15 +69,14 @@ export default function TimeGrid({
             if (rowIdx >= dayTimes.length)
               return <div key={day} className="empty-slot" />;
             const cellType = grid[day][rowIdx];
-            const color = cellType
-              ? cellTypes[cellType as keyof typeof cellTypes].color
-              : "#eee";
+            const cellTypeDef = cellType ? cellTypes[cellType] : undefined;
+            const color = cellTypeDef?.color ?? "#eee";
 
             // Determine visual state
             const inDragRange = isInDragRange?.(day, rowIdx) || false;
             const previewColor =
               inDragRange && currentMode && isDragging
-                ? cellTypes[currentMode as keyof typeof cellTypes]?.color
+                ? cellTypes[currentMode]?.color ?? color
                 : color;
             return (
               <div
@@ -89,7 +88,7 @@ export default function TimeGrid({
                 }}
                 onMouseEnter={() => handleDragMove?.(day, rowIdx)}
                 onMouseUp={handleDragEnd}
-                title={`Set ${cellType ? cellTypes[cellType as keyof typeof cellTypes].label : "Unset"} for ${day} ${getTimeRange(time)}`}
+                title={`Set ${cellTypeDef?.label ?? cellType ?? "Unset"} for ${day} ${getTimeRange(time)}`}
                 style={{
                   background: previewColor,
                 }}

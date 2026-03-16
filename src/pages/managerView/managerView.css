@@ -303,10 +303,34 @@
   border-top: 1px solid #e2e8f0;
 }
 
-.legend-section h4 {
-  margin: 0 0 12px 0;
+.legend-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.legend-section h4,
+.legend-section-header h4 {
+  margin: 0;
   font-size: 14px;
   font-weight: 600;
+  color: #1a202c;
+}
+
+.legend-settings-btn {
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: #718096;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.legend-settings-btn:hover {
+  background: #edf2f7;
   color: #1a202c;
 }
 
@@ -362,6 +386,71 @@
 .schedule-builder {
   flex: 1;
   min-width: 0;
+}
+
+/* Draft bar — sits above the sidebar+grid row */
+.sb-draft-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  background: #f7fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #4a5568;
+}
+
+.sb-draft-status {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sb-draft-unsaved {
+  color: #a0aec0;
+  font-style: italic;
+}
+
+.sb-draft-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.sb-draft-btn {
+  padding: 4px 10px;
+  font-size: 13px;
+  border: 1px solid #cbd5e0;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #2d3748;
+  cursor: pointer;
+}
+
+.sb-draft-btn:hover {
+  background: #edf2f7;
+}
+
+.sb-suggest-btn {
+  padding: 4px 12px;
+  font-size: 13px;
+  border: none;
+  border-radius: 4px;
+  background: #667eea;
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.sb-suggest-btn:hover:not(:disabled) {
+  background: #5a67d8;
+}
+
+.sb-suggest-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 .sb-sidebar-title {
@@ -453,6 +542,23 @@
   color: #4a5568;
   margin-left: 8px;
   flex-shrink: 0;
+}
+
+.sb-clear-all-btn {
+  width: 100%;
+  padding: 7px 0;
+  border: 1px solid #feb2b2;
+  border-radius: 5px;
+  background: #fff5f5;
+  color: #c53030;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sb-clear-all-btn:hover {
+  background: #fed7d7;
+  border-color: #fc8181;
 }
 
 .assignment-grid-wrapper {

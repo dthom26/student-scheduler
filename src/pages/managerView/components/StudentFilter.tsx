@@ -25,6 +25,7 @@ interface Props {
   onTypeFilterChange?: (selectedTypes: string[]) => void;
   onClearScheduleOptimistic?: (studentId: string) => Promise<void>;
   onDeleteSubmissionOptimistic?: (studentId: string) => Promise<void>;
+  onOpenSettings?: () => void;
 }
 
 export default function StudentFilter({
@@ -36,6 +37,7 @@ export default function StudentFilter({
   onTypeFilterChange,
   onClearScheduleOptimistic,
   onDeleteSubmissionOptimistic,
+  onOpenSettings,
 }: Props) {
   console.log(students);
   const { role } = useAuth();
@@ -214,7 +216,19 @@ export default function StudentFilter({
       />
 
       <div className="legend-section">
-        <h4>Schedule Legend</h4>
+        <div className="legend-section-header">
+          <h4>Schedule Legend</h4>
+          {onOpenSettings && (
+            <button
+              className="legend-settings-btn"
+              onClick={onOpenSettings}
+              title="Configure availability types"
+              aria-label="Configure availability types"
+            >
+              ⚙
+            </button>
+          )}
+        </div>
         <div className="legend-items">
           {Object.entries(cellTypes).map(([key, type]) => (
             <div key={key} className="legend-item">

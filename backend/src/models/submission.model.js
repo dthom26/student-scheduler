@@ -12,8 +12,8 @@ const scheduleSlotSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ["available", "notAvailable", "class", "preferred"],
     required: true,
+    trim: true,
   },
 });
 

@@ -3,9 +3,19 @@ import "./managerView.css";
 import StudentFilter from "./components/StudentFilter";
 import StudentSchedulesCalendar from "./components/StudentSchedulesCalendar";
 import ScheduleBuilder from "./components/ScheduleBuilder";
+import DraftManagerPanel from "./components/DraftManagerPanel";
+import RulesConfigPanel from "./components/RulesConfigPanel";
+import AvailabilitySettingsPanel from "./components/AvailabilitySettingsPanel";
+import ConfirmModal from "../../components/ConfirmModal";
 import { submissionRepository } from "../../repositories/SubmissionRepository";
+import { suggestionsRepository } from "../../repositories/SuggestionsRepository";
+import { availabilityTypesRepository } from "../../repositories/AvailabilityTypesRepository";
+import { DEFAULT_AVAILABILITY_TYPES } from "../../types/availabilityType";
+import type { AvailabilityType } from "../../types/availabilityType";
 import { ERROR_MESSAGES } from "../../constants/errors";
 import { useAuth } from "../../context/AuthContext";
+import { useToast } from "../../context/ToastContext";
+import type { DraftAssignment } from "../../types/draft";
 
 type StudentStatus = "available" | "notAvailable" | "class" | "preferred";
 type Day = "Mon" | "Tue" | "Wed" | "Thu" | "Fri";
@@ -61,13 +71,6 @@ const times = [
   "18:00",
 ];
 
-const cellTypes: Record<string, CellType> = {
-  available: { label: "Available", color: "#a5d6a7" },
-  notAvailable: { label: "Not Available", color: "#cccccc" },
-  class: { label: "Class", color: "#90caf9" },
-  preferred: { label: "Preferred Shift", color: "#ffd54f" },
-};
-
 export default function ManagerScheduleWireframe() {
   const [location, setLocation] = useState<string>("hsl");
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
@@ -79,9 +82,38 @@ export default function ManagerScheduleWireframe() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dataLoaded, setDataLoaded] = useState(false);
-  const [selectedAvailabilityTypes, setSelectedAvailabilityTypes] = useState<
-    string[]
-  >(Object.keys(cellTypes));
+  const toast = useToast();
+  const [isDraftPanelOpen, setIsDraftPanelOpen] = useState(false);
+  const [activeDraftId, setActiveDraftId] = useState<string | null>(null);
+  const [activeDraftName, setActiveDraftName] = useState<string | null>(null);
+  const [isRulesPanelOpen, setIsRulesPanelOpen] = useState(false);
+  const [isAvailabilitySettingsPanelOpen, setIsAvailabilitySettingsPanelOpen] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [pendingSuggestion, setPendingSuggestion] = useState<Assignment[] | null>(null);
+  const [availabilityTypes, setAvailabilityTypes] = useState<AvailabilityType[]>(DEFAULT_AVAILABILITY_TYPES);
+
+  // Build cellTypes record from all fetched types (manager view shows all, even disabled)
+  const cellTypes = useMemo<Record<string, CellType>>(
+    () =>
+      Object.fromEntries(
+        availabilityTypes.map((t) => [t.key, { label: t.label, color: t.color }])
+      ),
+    [availabilityTypes]
+  );
+
+  const [selectedAvailabilityTypes, setSelectedAvailabilityTypes] = useState<string[]>(
+    () => availabilityTypes.map((t) => t.key)
+  );
+
+  // Fetch availability types once on mount
+  useEffect(() => {
+    availabilityTypesRepository.getTypes()
+      .then((types) => {
+        setAvailabilityTypes(types);
+        setSelectedAvailabilityTypes(types.map((t) => t.key));
+      })
+      .catch(() => { /* silently keep defaults */ });
+  }, []);
 
   const onTypeFilterChange = (selectedTypes: string[]) => {
     setSelectedAvailabilityTypes(selectedTypes);
@@ -162,6 +194,22 @@ export default function ManagerScheduleWireframe() {
     setSelectedStudents([]);
     setAssignments([]);
     setSelectedAssignmentStudent("");
+    setActiveDraftId(null);
+    setActiveDraftName(null);
+  };
+
+  const handleGenerateSuggestion = async () => {
+    if (!token) return;
+    setIsGenerating(true);
+    try {
+      const suggested = await suggestionsRepository.generate(token, location);
+      setPendingSuggestion(suggested as Assignment[]);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to generate suggestion.";
+      toast.error(msg);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   // Memoize the transformation functions for better performance
@@ -372,6 +420,7 @@ export default function ManagerScheduleWireframe() {
                 onTypeFilterChange={onTypeFilterChange}
                 onClearScheduleOptimistic={clearScheduleOptimistic}
                 onDeleteSubmissionOptimistic={deleteSubmissionOptimistic}
+                onOpenSettings={() => setIsAvailabilitySettingsPanelOpen(true)}
               />
               <div className="manager-panel-body">
                 <h3 className="manager-panel-title">Student Schedules</h3>
@@ -397,9 +446,63 @@ export default function ManagerScheduleWireframe() {
                 selectedAssignmentStudent={selectedAssignmentStudent}
                 onAssignmentStudentChange={setSelectedAssignmentStudent}
                 onRangeAssign={handleRangeAssign}
+                activeDraftName={activeDraftName}
+                onOpenDrafts={() => setIsDraftPanelOpen(true)}
+                onOpenRules={() => setIsRulesPanelOpen(true)}
+                onGenerateSuggestion={handleGenerateSuggestion}
+                isGenerating={isGenerating}
+                onClearAll={() => setAssignments([])}
               />
             </div>
           </div>
+
+          <DraftManagerPanel
+            isOpen={isDraftPanelOpen}
+            onClose={() => setIsDraftPanelOpen(false)}
+            location={location}
+            currentAssignments={assignments as DraftAssignment[]}
+            activeDraftId={activeDraftId}
+            activeDraftName={activeDraftName}
+            onLoadDraft={(newAssignments, id, name) => {
+              setAssignments(newAssignments as Assignment[]);
+              setActiveDraftId(id);
+              setActiveDraftName(name);
+            }}
+            onDraftSaved={(id, name) => {
+              setActiveDraftId(id);
+              setActiveDraftName(name);
+            }}
+          />
+
+          <RulesConfigPanel
+            isOpen={isRulesPanelOpen}
+            onClose={() => setIsRulesPanelOpen(false)}
+          />
+
+          <AvailabilitySettingsPanel
+            isOpen={isAvailabilitySettingsPanelOpen}
+            onClose={() => setIsAvailabilitySettingsPanelOpen(false)}
+            initialTypes={availabilityTypes}
+            onSaved={(saved) => {
+              setAvailabilityTypes(saved);
+              setSelectedAvailabilityTypes(saved.map((t) => t.key));
+            }}
+          />
+
+          {pendingSuggestion && (
+            <ConfirmModal
+              isOpen={true}
+              message={`Apply AI suggestion? This will replace the current ${assignments.length} assignment(s) with ${pendingSuggestion.length} suggested slot(s).`}
+              onConfirm={() => {
+                setAssignments(pendingSuggestion);
+                setActiveDraftId(null);
+                setActiveDraftName(null);
+                setPendingSuggestion(null);
+                toast.success("Suggestion applied. Save as a draft to keep it.");
+              }}
+              onCancel={() => setPendingSuggestion(null)}
+            />
+          )}
         </>
       )}
     </div>

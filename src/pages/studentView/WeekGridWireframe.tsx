@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import "./weekgrid.css";
 import WeekStudentInfo from "./components/WeekStudentInfo";
 import ModePicker from "./components/ModePicker";
@@ -7,11 +7,13 @@ import DayPicker from "./components/DayPicker";
 import SingleDayGrid from "./components/SingleDayGrid";
 import { createSubmission } from "../../services/scheduleService";
 import { submissionRepository } from "../../repositories/SubmissionRepository";
+import { availabilityTypesRepository } from "../../repositories/AvailabilityTypesRepository";
+import { DEFAULT_AVAILABILITY_TYPES } from "../../types/availabilityType";
 import { ERROR_MESSAGES } from "../../constants/errors";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 
-type CellType = keyof typeof cellTypes | null;
+type CellType = string | null;
 type Day = "Mon" | "Tue" | "Wed" | "Thu" | "Fri";
 type Grid = Record<Day, CellType[]>;
 
@@ -46,13 +48,6 @@ const getTimesForDay = (day: Day): string[] =>
     ? times.slice(0, times.indexOf("17:00"))
     : times.slice(0, times.indexOf("18:00"));
 
-const cellTypes = {
-  available: { label: "Available", color: "#a5d6a7" },
-  notAvailable: { label: "Not Available", color: "#cccccc" },
-  class: { label: "Class", color: "#90caf9" },
-  preferred: { label: "Preferred Shift", color: "#ffd54f" },
-} as const;
-
 // Helper function to create a fresh empty grid
 const createEmptyGrid = (): Grid => {
   return days.reduce((acc, day) => {
@@ -70,8 +65,27 @@ export default function WeekGridWireframe() {
     studentData?.studentId,
   );
 
+  // Fetch availability types from API; fall back to defaults if unavailable
+  const [availabilityTypes, setAvailabilityTypes] = useState(DEFAULT_AVAILABILITY_TYPES);
+  useEffect(() => {
+    availabilityTypesRepository.getTypes()
+      .then(setAvailabilityTypes)
+      .catch(() => { /* silently keep defaults */ });
+  }, []);
+
+  // Build cellTypes record from enabled types only
+  const cellTypes = useMemo(
+    () =>
+      Object.fromEntries(
+        availabilityTypes
+          .filter((t) => t.enabled)
+          .map((t) => [t.key, { label: t.label, color: t.color }])
+      ),
+    [availabilityTypes]
+  );
+
   const [grid, setGrid] = useState<Grid>(createEmptyGrid);
-  const [mode, setMode] = useState<keyof typeof cellTypes>("available");
+  const [mode, setMode] = useState<string>("available");
   const [studentId, setStudentId] = useState("");
   const [studentName, setStudentName] = useState("");
   const [location, setLocation] = useState("");
@@ -94,6 +108,14 @@ export default function WeekGridWireframe() {
   const [isUpdate, setIsUpdate] = useState(false);
   const [isLoading] = useState(false);
   const [hasExistingSubmission, setHasExistingSubmission] = useState(false);
+
+  // If the active mode is no longer in enabled types, reset to the first available
+  useEffect(() => {
+    if (cellTypes[mode] === undefined) {
+      const firstKey = Object.keys(cellTypes)[0];
+      if (firstKey) setMode(firstKey);
+    }
+  }, [cellTypes, mode]);
 
   // Initialize with authenticated student data
   useEffect(() => {

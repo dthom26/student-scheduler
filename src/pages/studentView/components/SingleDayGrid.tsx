@@ -1,4 +1,4 @@
-type CellType = "available" | "notAvailable" | "class" | "preferred" | null;
+type CellType = string | null;
 type Day = "Mon" | "Tue" | "Wed" | "Thu" | "Fri";
 
 function formatTimeTo12Hour(time24: string): string {
@@ -46,12 +46,9 @@ export default function SingleDayGrid({
         {times.map((time, idx) => {
           if (idx >= slots.length) return null;
           const cellType = slots[idx];
-          const color = cellType
-            ? cellTypes[cellType as keyof typeof cellTypes].color
-            : "#eee";
-          const label = cellType
-            ? cellTypes[cellType as keyof typeof cellTypes].label
-            : "Unset";
+          const cellTypeDef = cellType ? cellTypes[cellType] : undefined;
+          const color = cellTypeDef?.color ?? "#eee";
+          const label = cellTypeDef?.label ?? cellType ?? "Unset";
           const timeRange = getTimeRange(time);
 
           return (

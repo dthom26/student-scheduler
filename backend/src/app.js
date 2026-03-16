@@ -7,6 +7,10 @@ import connectDB from "./database/mongodb.js";
 import errorMiddleware from "./middleware/error.middleware.js";
 import authRouter from "./routes/auth.routes.js";
 import submissionsRouter from "./routes/submissions.routes.js";
+import draftsRouter from "./routes/draft.routes.js";
+import rulesRouter from "./routes/rules.routes.js";
+import suggestionsRouter from "./routes/suggestions.routes.js";
+import availabilityTypesRouter from "./routes/availabilityTypes.routes.js";
 const app = express();
 
 // Middleware
@@ -28,6 +32,10 @@ app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 // TODO: Define API routes here (e.g., submissions, auth)
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/submissions", submissionsRouter);
+app.use("/api/v1/drafts", draftsRouter);
+app.use("/api/v1/rules", rulesRouter);
+app.use("/api/v1/suggestions", suggestionsRouter);
+app.use("/api/v1/availability-types", availabilityTypesRouter);
 
 app.get("/", (req, res) => {
   res.send("Student Scheduler Backend is running!");

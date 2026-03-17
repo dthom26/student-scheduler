@@ -1,3 +1,30 @@
+/* Student view root — flex column so header + grid stack vertically */
+.student-view-root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Student header — mirrors manager-header style */
+.student-header {
+  background: #ffffff;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e6edf3;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.student-header-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a202c;
+}
+
 /* Week grid styles (mobile-first) */
 .weekgrid-root {
   display: flex;
@@ -75,36 +102,69 @@
   border: 1px solid #999;
   border-radius: 2px;
 }
+/* Outer card wrapper — matches manager grid assignment-grid-wrapper */
+.weekgrid-grid-wrapper {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background: #ffffff;
+  overflow: hidden;
+}
+
 .weekgrid-times-row {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
+  display: grid;
+  grid-template-columns: 80px repeat(5, 1fr);
   user-select: none;
+}
+/* Header time-col: taller with heavier bottom border */
+.weekgrid-times-row .time-col {
+  height: 44px;
+  border-bottom: 2px solid #e2e8f0;
 }
 .time-col {
-  width: 60px;
-  text-align: right;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 8px;
   font-size: 12px;
+  color: #718096;
+  background: #f7fafc;
+  border-bottom: 1px solid #e2e8f0;
+  box-sizing: border-box;
   user-select: none;
+  white-space: nowrap;
+  overflow: hidden;
 }
 .day-header {
-  width: 80px;
-  text-align: center;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
   font-weight: 700;
+  color: #1a202c;
+  background: #ffffff;
+  border-bottom: 2px solid #e2e8f0;
+  border-left: 1px solid #e2e8f0;
+  box-sizing: border-box;
   user-select: none;
 }
 .time-row {
-  display: flex;
-  gap: 8px;
-  align-items: center;
+  display: grid;
+  grid-template-columns: 80px repeat(5, 1fr);
   user-select: none;
 }
+.time-row .time-col {
+  height: 40px;
+}
 .slot {
-  width: 80px;
-  height: 32px;
-  border: 1px solid #ccc;
-  background: #eee;
-  cursor: pointer;
+  height: 40px;
+  border: none;
+  border-bottom: 1px solid #e2e8f0;
+  border-left: 1px solid #e2e8f0;
+  background: #ffffff;
+  cursor: crosshair;
+  box-sizing: border-box;
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
@@ -134,7 +194,18 @@
   pointer-events: none;
 }
 .empty-slot {
-  width: 80px;
+  height: 40px;
+  background: repeating-linear-gradient(
+    -45deg,
+    #f0f4f8,
+    #f0f4f8 3px,
+    #e8edf2 3px,
+    #e8edf2 6px
+  );
+  border-bottom: 1px solid #e2e8f0;
+  border-left: 1px solid #e2e8f0;
+  box-sizing: border-box;
+  pointer-events: none;
 }
 .sidebar-right {
   min-width: 220px;
@@ -244,25 +315,26 @@
     min-width: unset;
   }
 
-  /* Compress grid for mobile */
+  /* Compress grid columns — width on children is ignored in CSS Grid, override the template */
+  .weekgrid-times-row,
+  .time-row {
+    grid-template-columns: 64px repeat(5, 1fr);
+  }
   .slot {
-    width: 70px;
     height: 28px;
     font-size: 11px;
   }
+  .time-row .time-col {
+    height: 28px;
+  }
   .empty-slot {
-    width: 70px;
+    height: 28px;
   }
   .day-header {
-    width: 70px;
     font-size: 12px;
   }
   .time-col {
-    width: 50px;
     font-size: 11px;
-  }
-  .time-row {
-    gap: 4px;
   }
 
   /* Reduce padding on grid area */
@@ -286,20 +358,24 @@
 
 @media (max-width: 600px) {
   /* Extra small phones: even more compact */
+  .weekgrid-times-row,
+  .time-row {
+    grid-template-columns: 60px repeat(5, 1fr);
+  }
   .slot {
-    width: 60px;
     height: 24px;
     font-size: 10px;
   }
+  .time-row .time-col {
+    height: 24px;
+  }
   .empty-slot {
-    width: 60px;
+    height: 24px;
   }
   .day-header {
-    width: 60px;
     font-size: 11px;
   }
   .time-col {
-    width: 45px;
     font-size: 10px;
   }
 
@@ -307,15 +383,6 @@
   .mode-picker label {
     font-size: 13px;
     margin-right: 8px;
-  }
-
-  /* Tighter spacing */
-  .weekgrid-times-row {
-    gap: 4px;
-    margin-bottom: 4px;
-  }
-  .time-row {
-    gap: 2px;
   }
 }
 

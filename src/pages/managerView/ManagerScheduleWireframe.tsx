@@ -14,6 +14,7 @@ import { DEFAULT_AVAILABILITY_TYPES } from "../../types/availabilityType";
 import type { AvailabilityType } from "../../types/availabilityType";
 import { ERROR_MESSAGES } from "../../constants/errors";
 import { useAuth } from "../../context/AuthContext";
+import { useLogout } from "../../hooks/useLogout";
 import { useToast } from "../../context/ToastContext";
 import type { DraftAssignment } from "../../types/draft";
 
@@ -78,6 +79,7 @@ export default function ManagerScheduleWireframe() {
   const [selectedAssignmentStudent, setSelectedAssignmentStudent] =
     useState<string>("");
   const { token } = useAuth();
+  const handleLogout = useLogout();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -352,6 +354,36 @@ export default function ManagerScheduleWireframe() {
 
   return (
     <div className="manager-root">
+      <header className="manager-header">
+        <div className="manager-header-controls">
+          <label className="location-label">
+            Location:
+            <select
+              value={location}
+              onChange={(e) => handleLocationChange(e.target.value)}
+              className="location-select"
+            >
+              <option value="hsl">HSL</option>
+              <option value="med">Med</option>
+            </select>
+          </label>
+          <button
+            onClick={handleRefreshData}
+            disabled={isLoading}
+            style={{
+              marginLeft: "15px",
+              padding: "5px 10px",
+              opacity: isLoading ? 0.5 : 1,
+            }}
+          >
+            {isLoading ? "Refreshing..." : "Refresh Data"}
+          </button>
+        </div>
+        <button className="btn-logout" onClick={handleLogout}>
+          Logout
+        </button>
+      </header>
+
       {isLoading && !dataLoaded && (
         <div style={{ padding: "20px", textAlign: "center" }}>
           <div>Loading submissions...</div>
@@ -381,33 +413,6 @@ export default function ManagerScheduleWireframe() {
 
       {(dataLoaded || (!isLoading && submissions.length > 0)) && !error && (
         <>
-          <header className="manager-header">
-            <div className="manager-header-controls">
-              <label className="location-label">
-                Location:
-                <select
-                  value={location}
-                  onChange={(e) => handleLocationChange(e.target.value)}
-                  className="location-select"
-                >
-                  <option value="hsl">HSL</option>
-                  <option value="med">Med</option>
-                </select>
-              </label>
-              <button
-                onClick={handleRefreshData}
-                disabled={isLoading}
-                style={{
-                  marginLeft: "15px",
-                  padding: "5px 10px",
-                  opacity: isLoading ? 0.5 : 1,
-                }}
-              >
-                {isLoading ? "Refreshing..." : "Refresh Data"}
-              </button>
-            </div>
-          </header>
-
           <div className="manager-content">
             {/* Panel 1: availability calendar */}
             <div className="manager-panel">

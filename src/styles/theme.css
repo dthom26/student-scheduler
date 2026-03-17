@@ -78,6 +78,26 @@ body {
   background: var(--surface);
   border-right: 1px solid var(--border);
   box-shadow: var(--card-shadow);
+
+/* Shared logout button used in both view headers */
+.btn-logout {
+  padding: 7px 16px;
+  background-color: var(--danger);
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  flex-shrink: 0;
+}
+.btn-logout:hover {
+  background-color: #e53e3e;
+}
+.btn-logout:active {
+  transform: scale(0.97);
+}
   border-radius: 8px;
 }
 

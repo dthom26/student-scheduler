@@ -52,7 +52,7 @@ export default function TimeGrid({
   currentMode,
 }: Props) {
   return (
-    <>
+    <div className="weekgrid-grid-wrapper">
       <div className="weekgrid-times-row">
         <div className="time-col"></div>
         {days.map((day) => (
@@ -61,9 +61,14 @@ export default function TimeGrid({
           </div>
         ))}
       </div>
-      {times.map((time, rowIdx) => (
-        <div key={time} className="time-row">
-          <div className="time-col">{time}</div>
+      {times.map((time, rowIdx) => {
+        // Skip rows where every day produces an empty-slot (e.g. the "18:00" end-label row)
+        const allEmpty = days.every((d) => rowIdx >= getTimesForDay(d).length);
+        if (allEmpty) return null;
+
+        return (
+          <div key={time} className="time-row">
+            <div className="time-col">{formatTimeTo12Hour(time)}</div>
           {days.map((day) => {
             const dayTimes = getTimesForDay(day);
             if (rowIdx >= dayTimes.length)
@@ -96,7 +101,8 @@ export default function TimeGrid({
             );
           })}
         </div>
-      ))}
-    </>
+        );
+      })}
+    </div>
   );
 }

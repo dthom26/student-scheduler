@@ -1,7 +1,6 @@
 import "./App.css";
 import "./styles/theme.css";
 import { lazy, Suspense } from "react";
-import { useNavigate } from "react-router-dom";
 import RoleSelector from "./components/RoleSelector";
 import { useAuth } from "./context/AuthContext";
 
@@ -15,13 +14,7 @@ const ManagerScheduleWireframe = lazy(
 );
 
 function App() {
-  const { role, isAuthenticated, isLoading, logout, studentData } = useAuth();
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    navigate("/");
-  };
+  const { role, isAuthenticated, isLoading, studentData } = useAuth();
 
   // Show loading spinner while checking authentication
   if (isLoading) {
@@ -51,17 +44,11 @@ function App() {
     <div className="app-container">
       <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
         <main className="main-column">
-          <button onClick={handleLogout} className="logout-button">
-            Back
-          </button>
           <section className="card">
             {/* Suspense wraps lazy-loaded components and shows fallback while loading */}
             <Suspense fallback={<LoadingView />}>
               {role === "student" && studentData && (
-                <>
-                  <h3 style={{ marginTop: 0 }}>Submit Your Availability</h3>
-                  <WeekGridWireframe key={studentData.studentId} />
-                </>
+                <WeekGridWireframe key={studentData.studentId} />
               )}
               {role === "manager" && <ManagerScheduleWireframe />}
             </Suspense>

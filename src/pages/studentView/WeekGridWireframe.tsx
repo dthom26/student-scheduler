@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import "./weekgrid.css";
+import ConfirmModal from "../../components/ConfirmModal";
+import { useLogout } from "../../hooks/useLogout";
 import WeekStudentInfo from "./components/WeekStudentInfo";
 import ModePicker from "./components/ModePicker";
 import TimeGrid from "./components/TimeGrid";
@@ -108,6 +110,7 @@ export default function WeekGridWireframe() {
   const [isUpdate, setIsUpdate] = useState(false);
   const [isLoading] = useState(false);
   const [hasExistingSubmission, setHasExistingSubmission] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   // If the active mode is no longer in enabled types, reset to the first available
   useEffect(() => {
@@ -462,9 +465,15 @@ export default function WeekGridWireframe() {
   };
 
   const canSubmit = studentId.trim() && studentName.trim() && location;
+  const handleLogout = useLogout();
 
   return (
-    <div className="weekgrid-root">
+    <div className="student-view-root">
+      <header className="student-header">
+        <h2 className="student-header-title">Submit Your Availability</h2>
+        <button className="btn-logout" onClick={handleLogout}>Logout</button>
+      </header>
+      <div className="weekgrid-root">
       <div className="weekgrid-left">
         <div
           style={{
@@ -531,7 +540,7 @@ export default function WeekGridWireframe() {
 
       <div className="sidebar-right">
         <div>
-          <button onClick={() => setGrid(createEmptyGrid())}>Clear</button>{" "}
+          <button onClick={() => setShowClearConfirm(true)}>Clear</button>{" "}
           <button disabled={!canSubmit || isLoading} onClick={handleSubmit}>
             {isLoading
               ? "Loading..."
@@ -567,6 +576,16 @@ export default function WeekGridWireframe() {
             onChange={(e) => setNotes(e.target.value)}
           />
         </div>
+      </div>
+      <ConfirmModal
+        isOpen={showClearConfirm}
+        title="Clear Schedule"
+        message="Are you sure you want to clear your schedule? This cannot be undone."
+        confirmLabel="Clear"
+        danger={true}
+        onConfirm={() => { setGrid(createEmptyGrid()); setShowClearConfirm(false); }}
+        onCancel={() => setShowClearConfirm(false)}
+      />
       </div>
     </div>
   );

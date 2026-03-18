@@ -436,17 +436,10 @@ export default function WeekGridWireframe() {
         toast.success("Schedule submitted successfully!");
       }
 
-      // Don't reset the form after successful update, but do after new submission
-      if (!isUpdate) {
-        setGrid(createEmptyGrid());
-        setStudentId("");
-        setStudentName("");
-        setLocation("");
-        setNotes("");
-      } else {
-        // After update, we now have a submission
-        setHasExistingSubmission(true);
-      }
+      // After any successful submission, stay on the page with data intact.
+      // Flip to update mode so future saves use PUT instead of POST.
+      setIsUpdate(true);
+      setHasExistingSubmission(true);
     } catch (error) {
       console.error(ERROR_MESSAGES.SUBMIT_FAILED, error);
 

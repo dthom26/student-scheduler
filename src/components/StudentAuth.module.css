@@ -1,0 +1,151 @@
+.container {
+  padding: 28px 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.card {
+  width: 100%;
+  max-width: 520px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 6px 24px rgba(20, 32, 70, 0.06);
+  padding: 24px;
+  border: 1px solid rgba(20, 32, 70, 0.04);
+}
+
+.title {
+  margin: 0 0 12px 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #16213e;
+}
+
+.section {
+  margin-bottom: 16px;
+}
+
+.muted {
+  color: #6b7280;
+  margin-bottom: 12px;
+}
+
+.formGroup {
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+}
+
+.label {
+  font-size: 13px;
+  color: #475569;
+  margin-bottom: 8px;
+}
+
+.required {
+  color: #b00020;
+  margin-left: 4px;
+}
+
+.input {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #d1d7e0;
+  font-size: 14px;
+  outline: none;
+}
+
+.input:focus {
+  border-color: #6b8cff;
+  box-shadow: 0 6px 18px rgba(99, 102, 241, 0.08);
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+}
+
+.primaryButton {
+  background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.12);
+  flex: 1;
+}
+
+.ghostButton {
+  background: #f3f4f6;
+  color: #111827;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  flex: 1;
+}
+
+.secondaryButton {
+  background: #e6e9ef;
+  color: #111827;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.backButton {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.loading {
+  text-align: center;
+  margin-top: 10px;
+  color: #6b7280;
+}
+
+.error {
+  color: #b00020;
+  background-color: #fff1f2;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.returnCard {
+  width: 100%;
+  max-width: 480px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(20, 32, 70, 0.06);
+  padding: 20px;
+  border: 1px solid rgba(20, 32, 70, 0.04);
+}
+
+.summary {
+  margin: 12px 0 18px 0;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+.success {
+  color: #16a34a;
+  margin-top: 8px;
+}
+
+@media (max-width: 480px) {
+  .card { padding: 18px; }
+  .title { font-size: 18px; }
+  .row { flex-direction: column; }
+}

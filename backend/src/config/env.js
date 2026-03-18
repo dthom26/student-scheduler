@@ -12,4 +12,4 @@ const envFile = process.env.NODE_ENV === 'production'
 
 config({ path: join(__dirname, '../../', envFile) });
 
-export const { PORT, NODE_ENV, MONGO_URI, MANAGER_PASSWORD, JWT_SECRET, OPENAI_API_KEY, ANTHROPIC_API_KEY } = process.env;
+export const { PORT, NODE_ENV, MONGO_URI, MANAGER_PASSWORD, JWT_SECRET, OPENAI_API_KEY, ANTHROPIC_API_KEY, HF_API_TOKEN, GROQ_API_KEY } = process.env;

@@ -21,10 +21,30 @@ const rulesSchema = new mongoose.Schema(
       default: 20,
       min: 1,
     },
+    minHoursPerWeek: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    maxDaysPerWeek: {
+      type: Number,
+      default: 5,
+      min: 1,
+      max: 5,
+    },
     minShiftLength: {
       type: Number,
       default: 1, // hours
       min: 0.5,
+    },
+    maxShiftLength: {
+      type: Number,
+      default: 0, // 0 = no limit
+      min: 0,
+    },
+    preferClosingShifts: {
+      type: Boolean,
+      default: false,
     },
     preferPreferredSlots: {
       type: Boolean,
@@ -34,6 +54,15 @@ const rulesSchema = new mongoose.Schema(
       type: String,
       default: "",
       trim: true,
+    },
+    allowOverlappingSchedules: {
+      type: Boolean,
+      default: false,
+    },
+    targetCoveragePerSlot: {
+      type: Number,
+      default: 2,
+      min: 1,
     },
   },
   { timestamps: true }

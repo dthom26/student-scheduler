@@ -1,7 +1,9 @@
 import "./App.css";
 import "./styles/theme.css";
 import { lazy, Suspense } from "react";
-import RoleSelector from "./components/RoleSelector";
+import { Routes, Route, Navigate } from "react-router-dom";
+import StudentLoginPage from "./pages/StudentLoginPage";
+import ManagerLoginPage from "./pages/ManagerLoginPage";
 import { useAuth } from "./context/AuthContext";
 
 // Lazy load the large components for code splitting
@@ -36,26 +38,38 @@ function App() {
     );
   }
 
-  if (!isAuthenticated) {
-    return <RoleSelector />;
-  }
-
   return (
-    <div className="app-container">
-      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-        <main className="main-column">
-          <section className="card">
-            {/* Suspense wraps lazy-loaded components and shows fallback while loading */}
-            <Suspense fallback={<LoadingView />}>
-              {role === "student" && studentData && (
-                <WeekGridWireframe key={studentData.studentId} />
-              )}
-              {role === "manager" && <ManagerScheduleWireframe />}
-            </Suspense>
-          </section>
-        </main>
-      </div>
-    </div>
+    <Routes>
+      <Route path="/student" element={<StudentLoginPage />} />
+      <Route path="/manager" element={<ManagerLoginPage />} />
+
+      <Route
+        path="/"
+        element={
+          isAuthenticated ? (
+            <div className="app-container">
+              <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                <main className="main-column">
+                  <section className="card">
+                    {/* Suspense wraps lazy-loaded components and shows fallback while loading */}
+                    <Suspense fallback={<LoadingView />}>
+                      {role === "student" && studentData && (
+                        <WeekGridWireframe key={studentData.studentId} />
+                      )}
+                      {role === "manager" && <ManagerScheduleWireframe />}
+                    </Suspense>
+                  </section>
+                </main>
+              </div>
+            </div>
+          ) : (
+            <Navigate to="/student" replace />
+          )
+        }
+      />
+
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
 

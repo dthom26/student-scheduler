@@ -7,7 +7,11 @@ const DEFAULT_RULES = {
   bufferBeforeClass: 15,
   bufferAfterClass: 0,
   maxHoursPerWeek: 20,
+  minHoursPerWeek: 0,
+  maxDaysPerWeek: 5,
   minShiftLength: 1,
+  maxShiftLength: 0,
+  preferClosingShifts: false,
   preferPreferredSlots: true,
   customNotes: "",
 };
@@ -33,7 +37,7 @@ export const generateScheduleSuggestion = async (req, res, next) => {
         .json({ message: "No submissions found for this location." });
     }
 
-    const rules = rulesDoc ?? DEFAULT_RULES;
+    const rules = rulesDoc ? { ...DEFAULT_RULES, ...rulesDoc.toObject() } : DEFAULT_RULES;
     const assignments = await generateSuggestion(submissions, rules);
 
     res.json({ assignments });

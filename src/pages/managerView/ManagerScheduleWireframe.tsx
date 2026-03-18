@@ -1,10 +1,12 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import "./managerView.css";
 import StudentFilter from "./components/StudentFilter";
 import StudentSchedulesCalendar from "./components/StudentSchedulesCalendar";
 import ScheduleBuilder from "./components/ScheduleBuilder";
+import OverlapScheduleBuilder from "./components/OverlapScheduleBuilder";
 import DraftManagerPanel from "./components/DraftManagerPanel";
 import RulesConfigPanel from "./components/RulesConfigPanel";
+import { rulesRepository } from "../../repositories/RulesRepository";
 import AvailabilitySettingsPanel from "./components/AvailabilitySettingsPanel";
 import ConfirmModal from "../../components/ConfirmModal";
 import { submissionRepository } from "../../repositories/SubmissionRepository";
@@ -93,6 +95,7 @@ export default function ManagerScheduleWireframe() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [pendingSuggestion, setPendingSuggestion] = useState<Assignment[] | null>(null);
   const [availabilityTypes, setAvailabilityTypes] = useState<AvailabilityType[]>(DEFAULT_AVAILABILITY_TYPES);
+  const [allowOverlap, setAllowOverlap] = useState(false);
 
   // Build cellTypes record from all fetched types (manager view shows all, even disabled)
   const cellTypes = useMemo<Record<string, CellType>>(
@@ -117,6 +120,19 @@ export default function ManagerScheduleWireframe() {
       .catch(() => { /* silently keep defaults */ });
   }, []);
 
+  // Fetch rules to check overlap setting
+  const refreshRules = useCallback(() => {
+    rulesRepository.getRules()
+      .then((r) => {
+        setAllowOverlap(r.allowOverlappingSchedules ?? false);
+      })
+      .catch(() => { /* keep current */ });
+  }, []);
+
+  useEffect(() => {
+    refreshRules();
+  }, [refreshRules]);
+
   const onTypeFilterChange = (selectedTypes: string[]) => {
     setSelectedAvailabilityTypes(selectedTypes);
   };
@@ -133,23 +149,45 @@ export default function ManagerScheduleWireframe() {
     endIdx: number,
     studentId: string | null
   ) => {
+    // Handle overlap mode's "unassign:studentId" convention
+    const isUnassign = studentId?.startsWith("unassign:") ?? false;
+    const actualStudentId = isUnassign && studentId ? studentId.slice(9) : studentId;
+
     setAssignments((prev) => {
-      // Always clear the range first
       const next = prev.filter((a) => {
         if (a.day !== day) return true;
         const idx = times.indexOf(a.time);
         if (idx === -1) return true;
-        return idx < startIdx || idx > endIdx;
+        const inRange = idx >= startIdx && idx <= endIdx;
+        if (!inRange) return true;
+
+        if (allowOverlap) {
+          // In overlap mode, only remove the specific student being modified
+          if (isUnassign && actualStudentId) {
+            // Unassign: remove only this student's slots
+            return a.studentId !== actualStudentId;
+          }
+          if (actualStudentId) {
+            // Assign: remove this student's existing slots in range (will re-add below)
+            return a.studentId !== actualStudentId;
+          }
+          // null without unassign prefix = clear all (shouldn't happen in overlap mode)
+          return false;
+        }
+
+        // Non-overlap mode: clear the entire range
+        return false;
       });
 
-      // null = unassign only
-      if (!studentId) return next;
+      // Unassign = just filter, don't add anything
+      if (isUnassign || !actualStudentId) return next;
 
+      // Add new assignments for the student
       const additions: Assignment[] = [];
       for (let i = startIdx; i <= endIdx; i++) {
         const t = times[i];
         if (!t) continue;
-        additions.push({ studentId, day, time: t });
+        additions.push({ studentId: actualStudentId, day, time: t });
       }
 
       return [...next, ...additions];
@@ -442,22 +480,41 @@ export default function ManagerScheduleWireframe() {
 
             {/* Panel 2: assignment builder — ScheduleBuilder renders its own sidebar + grid */}
             <div className="manager-panel">
-              <ScheduleBuilder
-                days={days}
-                times={times}
-                students={displayedStudents}
-                location={location}
-                assignments={assignments}
-                selectedAssignmentStudent={selectedAssignmentStudent}
-                onAssignmentStudentChange={setSelectedAssignmentStudent}
-                onRangeAssign={handleRangeAssign}
-                activeDraftName={activeDraftName}
-                onOpenDrafts={() => setIsDraftPanelOpen(true)}
-                onOpenRules={() => setIsRulesPanelOpen(true)}
-                onGenerateSuggestion={handleGenerateSuggestion}
-                isGenerating={isGenerating}
-                onClearAll={() => setAssignments([])}
-              />
+              {allowOverlap ? (
+                <OverlapScheduleBuilder
+                  days={days}
+                  times={times}
+                  students={displayedStudents}
+                  location={location}
+                  assignments={assignments}
+                  selectedAssignmentStudent={selectedAssignmentStudent}
+                  onAssignmentStudentChange={setSelectedAssignmentStudent}
+                  onRangeAssign={handleRangeAssign}
+                  activeDraftName={activeDraftName}
+                  onOpenDrafts={() => setIsDraftPanelOpen(true)}
+                  onOpenRules={() => setIsRulesPanelOpen(true)}
+                  onGenerateSuggestion={handleGenerateSuggestion}
+                  isGenerating={isGenerating}
+                  onClearAll={() => setAssignments([])}
+                />
+              ) : (
+                <ScheduleBuilder
+                  days={days}
+                  times={times}
+                  students={displayedStudents}
+                  location={location}
+                  assignments={assignments}
+                  selectedAssignmentStudent={selectedAssignmentStudent}
+                  onAssignmentStudentChange={setSelectedAssignmentStudent}
+                  onRangeAssign={handleRangeAssign}
+                  activeDraftName={activeDraftName}
+                  onOpenDrafts={() => setIsDraftPanelOpen(true)}
+                  onOpenRules={() => setIsRulesPanelOpen(true)}
+                  onGenerateSuggestion={handleGenerateSuggestion}
+                  isGenerating={isGenerating}
+                  onClearAll={() => setAssignments([])}
+                />
+              )}
             </div>
           </div>
 
@@ -481,7 +538,10 @@ export default function ManagerScheduleWireframe() {
 
           <RulesConfigPanel
             isOpen={isRulesPanelOpen}
-            onClose={() => setIsRulesPanelOpen(false)}
+            onClose={() => {
+              setIsRulesPanelOpen(false);
+              refreshRules(); // Refresh overlap flag when rules panel closes
+            }}
           />
 
           <AvailabilitySettingsPanel

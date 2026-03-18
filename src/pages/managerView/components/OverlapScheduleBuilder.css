@@ -1,0 +1,94 @@
+/* OverlapScheduleBuilder-specific styles */
+/* Inherits most styles from managerView.css (.schedule-builder, .assignment-*) */
+
+/* Badge indicator for overlap mode */
+.sb-overlap-badge {
+  display: inline-block;
+  background: #bee3f8;
+  color: #2b6cb0;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-left: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Override block positioning for overlap layout */
+.overlap-schedule-builder .overlap-block {
+  /* Remove right: 0 from base .assignment-block */
+  right: auto;
+  /* Width and left are set inline via colWidth/colLeft */
+}
+
+/* When multiple blocks share a slot, add subtle gap between them */
+.overlap-schedule-builder .overlap-block {
+  box-sizing: border-box;
+  padding-right: 2px;
+}
+
+/* Narrower blocks need smaller text */
+.overlap-schedule-builder .overlap-block .assignment-block-name {
+  font-size: 11px;
+}
+
+.overlap-schedule-builder .overlap-block .assignment-block-info {
+  font-size: 10px;
+}
+
+/* For very narrow columns (3+ overlaps), hide the info line */
+.overlap-schedule-builder .overlap-block[style*="width: 33"] .assignment-block-info,
+.overlap-schedule-builder .overlap-block[style*="width: 25"] .assignment-block-info,
+.overlap-schedule-builder .overlap-block[style*="width: 20"] .assignment-block-info {
+  display: none;
+}
+
+/* ── Right-click context menu ── */
+.overlap-context-menu {
+  position: fixed;
+  z-index: 1000;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
+  min-width: 200px;
+  padding: 4px 0;
+  animation: overlapMenuFadeIn 0.1s ease-out;
+}
+
+@keyframes overlapMenuFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.overlap-context-item {
+  display: block;
+  width: 100%;
+  padding: 8px 14px;
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 13px;
+  color: #2d3748;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.overlap-context-item:hover {
+  background: #edf2f7;
+}
+
+.overlap-context-item--danger {
+  color: #c53030;
+}
+
+.overlap-context-item--danger:hover {
+  background: #fed7d7;
+}
+
+.overlap-context-divider {
+  height: 1px;
+  background: #e2e8f0;
+  margin: 4px 0;
+}

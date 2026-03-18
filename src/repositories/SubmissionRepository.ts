@@ -90,9 +90,17 @@ export class SubmissionRepository {
       throw new Error(ERROR_MESSAGES.SCHEDULE_EMPTY);
     }
 
+    const payload = {
+      studentId: submissionData.student.id,
+      studentName: submissionData.student.name,
+      location: submissionData.student.location,
+      schedule: submissionData.schedule,
+      notes: submissionData.notes,
+    };
+
     return http<SubmissionResponse>("/api/v1/submissions", {
       method: "POST",
-      body: JSON.stringify(submissionData),
+      body: JSON.stringify(payload),
     });
   }
 

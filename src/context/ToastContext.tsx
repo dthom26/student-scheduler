@@ -33,12 +33,14 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, [remove]);
 
-  const value = {
-    show,
-    success: (m: string, d?: number) => show(m, "success", d),
-    error: (m: string, d?: number) => show(m, "error", d),
-    info: (m: string, d?: number) => show(m, "info", d),
-  };
+  const success = useCallback((m: string, d?: number) => show(m, "success", d), [show]);
+  const error = useCallback((m: string, d?: number) => show(m, "error", d), [show]);
+  const info = useCallback((m: string, d?: number) => show(m, "info", d), [show]);
+
+  const value = React.useMemo(
+    () => ({ show, success, error, info }),
+    [show, success, error, info]
+  );
 
   return (
     <ToastContext.Provider value={value}>

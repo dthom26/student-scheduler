@@ -24,10 +24,11 @@ const RulesConfigPanel: React.FC<Props> = ({ isOpen, onClose }) => {
     setIsLoading(true);
     rulesRepository
       .getRules()
-      .then(setRules)
+      .then((saved) => setRules({ ...DEFAULT_RULES, ...saved }))
       .catch(() => toast.error("Failed to load rules."))
       .finally(() => setIsLoading(false));
-  }, [isOpen, toast]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   const set = <K extends keyof ScheduleRules>(key: K, value: ScheduleRules[K]) =>
     setRules((prev) => ({ ...prev, [key]: value }));
@@ -37,7 +38,7 @@ const RulesConfigPanel: React.FC<Props> = ({ isOpen, onClose }) => {
     setIsSaving(true);
     try {
       const saved = await rulesRepository.updateRules(token, rules);
-      setRules(saved);
+      setRules({ ...DEFAULT_RULES, ...saved });
       toast.success("Rules saved.");
       onClose();
     } catch {
@@ -141,6 +142,92 @@ const RulesConfigPanel: React.FC<Props> = ({ isOpen, onClose }) => {
                   <span>Prioritize "Preferred" slots when suggesting</span>
                 </div>
               </div>
+
+              <div className="rules-field">
+                <label>Min hours per week</label>
+                <p className="rules-field-hint">
+                  Each student will be prioritised until they reach this target. 0 = no minimum.
+                </p>
+                <input
+                  type="number"
+                  min={0}
+                  max={40}
+                  value={rules.minHoursPerWeek}
+                  onChange={(e) => set("minHoursPerWeek", Math.max(0, parseInt(e.target.value) || 0))}
+                />
+              </div>
+
+              <div className="rules-field">
+                <label>Max days per week</label>
+                <p className="rules-field-hint">
+                  Students will not be scheduled on more than this many days per week.
+                </p>
+                <input
+                  type="number"
+                  min={1}
+                  max={5}
+                  value={rules.maxDaysPerWeek}
+                  onChange={(e) => set("maxDaysPerWeek", Math.min(5, Math.max(1, parseInt(e.target.value) || 5)))}
+                />
+              </div>
+
+              <div className="rules-field">
+                <label>Max shift length (hours)</label>
+                <p className="rules-field-hint">
+                  Shifts will be capped at this length. 0 = no limit.
+                </p>
+                <input
+                  type="number"
+                  min={0}
+                  max={12}
+                  step={0.5}
+                  value={rules.maxShiftLength}
+                  onChange={(e) => set("maxShiftLength", Math.max(0, parseFloat(e.target.value) || 0))}
+                />
+              </div>
+
+              <div className="rules-field">
+                <div className="rules-checkbox-row">
+                  <input
+                    type="checkbox"
+                    id="preferClosingShifts"
+                    checked={rules.preferClosingShifts}
+                    onChange={(e) => set("preferClosingShifts", e.target.checked)}
+                  />
+                  <span>Prefer closing shifts (from 16:00 onward)</span>
+                </div>
+              </div>
+
+              <div className="rules-field rules-field-highlight">
+                <div className="rules-checkbox-row">
+                  <input
+                    type="checkbox"
+                    id="allowOverlappingSchedules"
+                    checked={rules.allowOverlappingSchedules}
+                    onChange={(e) => set("allowOverlappingSchedules", e.target.checked)}
+                  />
+                  <span>Allow overlapping schedules</span>
+                </div>
+                <p className="rules-field-hint">
+                  When enabled, multiple students can be scheduled at the same time slot.
+                </p>
+              </div>
+
+              {rules.allowOverlappingSchedules && (
+                <div className="rules-field">
+                  <label>Target coverage per slot</label>
+                  <p className="rules-field-hint">
+                    How many students the algorithm will try to assign per time slot.
+                  </p>
+                  <input
+                    type="number"
+                    min={1}
+                    max={10}
+                    value={rules.targetCoveragePerSlot}
+                    onChange={(e) => set("targetCoveragePerSlot", Math.max(1, parseInt(e.target.value) || 2))}
+                  />
+                </div>
+              )}
 
               <div className="rules-field">
                 <label>Custom notes for AI</label>

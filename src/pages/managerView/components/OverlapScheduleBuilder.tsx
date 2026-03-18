@@ -1,4 +1,5 @@
-﻿import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import "./OverlapScheduleBuilder.css";
 
 type Day = "Mon" | "Tue" | "Wed" | "Thu" | "Fri";
 
@@ -45,6 +46,11 @@ interface Block {
   startIdx: number;
   endIdx: number;
   numSlots: number;
+}
+
+interface OverlapBlock extends Block {
+  colIndex: number;
+  colTotal: number;
 }
 
 interface DragState {
@@ -100,16 +106,23 @@ function getTimesForDay(day: Day): string[] {
     : allTimes.slice(0, allTimes.indexOf("18:00"));
 }
 
-function computeBlocks(
+/**
+ * Compute blocks with fixed column positions per student for the entire day.
+ * Matches StudentSchedulesCalendar layout: each student gets a consistent column.
+ */
+function computeOverlapBlocks(
   assignments: Assignment[],
   day: Day,
-  times: string[]
-): Block[] {
+  times: string[],
+  studentColumnMap: Map<string, number>,
+  totalColumns: number
+): OverlapBlock[] {
+  // Step 1: Build basic blocks (consecutive assignments for same student)
   const dayAssignments = assignments
     .filter((a) => a.day === day)
     .map((a) => ({ ...a, idx: times.indexOf(a.time) }))
     .filter((a) => a.idx !== -1)
-    .sort((a, b) => a.idx - b.idx);
+    .sort((a, b) => a.studentId.localeCompare(b.studentId) || a.idx - b.idx);
 
   if (dayAssignments.length === 0) return [];
 
@@ -130,10 +143,28 @@ function computeBlocks(
     }
   }
   if (current) blocks.push(current);
-  return blocks;
+
+  // Step 2: Assign fixed column based on student's position in the day's roster
+  return blocks.map((block) => ({
+    ...block,
+    colIndex: studentColumnMap.get(block.studentId) ?? 0,
+    colTotal: totalColumns,
+  }));
 }
 
-export default function ScheduleBuilder({
+/**
+ * Get the set of students who have assignments on a given day,
+ * sorted consistently for stable column ordering.
+ */
+function getStudentsForDay(assignments: Assignment[], day: Day): string[] {
+  const studentIds = new Set<string>();
+  for (const a of assignments) {
+    if (a.day === day) studentIds.add(a.studentId);
+  }
+  return Array.from(studentIds).sort();
+}
+
+export default function OverlapScheduleBuilder({
   days,
   times,
   students,
@@ -182,13 +213,18 @@ export default function ScheduleBuilder({
       const end = Math.max(originIdx, currentIdx);
       if (originWasAssigned) {
         if (originIdx === currentIdx) {
-          onRangeAssignRef.current(day, start, end, null);
+          // Single click on assigned block = unassign just that student's slots
+          // Pass studentId prefixed with "unassign:" so wireframe knows to remove
+          onRangeAssignRef.current(day, start, end, `unassign:${dragStudentId}`);
         } else if (currentIdx > originIdx) {
+          // Drag right from assigned = extend that student
           onRangeAssignRef.current(day, start, end, dragStudentId);
         } else {
-          onRangeAssignRef.current(day, start, end, null);
+          // Drag left from assigned = unassign that student from the range
+          onRangeAssignRef.current(day, start, end, `unassign:${dragStudentId}`);
         }
       } else {
+        // From empty slot = assign selected student
         onRangeAssignRef.current(day, start, end, dragStudentId);
       }
       setDragState(null);
@@ -200,7 +236,7 @@ export default function ScheduleBuilder({
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
     };
-  }, []); // attach once; all values accessed via refs
+  }, []);
 
   const calculateHours = (studentId: string): number =>
     assignments.filter((a) => a.studentId === studentId).length * 0.5;
@@ -210,13 +246,22 @@ export default function ScheduleBuilder({
   const handleSlotMouseDown = (e: React.MouseEvent, day: Day, timeIdx: number) => {
     e.preventDefault();
     const time = times[timeIdx];
-    const existing = assignments.find((a) => a.day === day && a.time === time);
-    if (existing) {
+    if (!selectedAssignmentStudent) return;
+
+    // In overlap mode, clicking a slot instantly adds the selected student to that slot
+    // (unless they're already there, in which case we start a drag to extend/shrink)
+    const existingForSelected = assignments.find(
+      (a) => a.day === day && a.time === time && a.studentId === selectedAssignmentStudent
+    );
+    if (existingForSelected) {
+      // Already assigned here - start drag to modify
       setDragState({
         active: true, day, originIdx: timeIdx, currentIdx: timeIdx,
-        dragStudentId: existing.studentId, originWasAssigned: true,
+        dragStudentId: selectedAssignmentStudent, originWasAssigned: true,
       });
-    } else if (selectedAssignmentStudent) {
+    } else {
+      // Not assigned here - instantly add to this single slot, then allow drag to extend
+      onRangeAssign(day, timeIdx, timeIdx, selectedAssignmentStudent);
       setDragState({
         active: true, day, originIdx: timeIdx, currentIdx: timeIdx,
         dragStudentId: selectedAssignmentStudent, originWasAssigned: false,
@@ -224,21 +269,42 @@ export default function ScheduleBuilder({
     }
   };
 
-  const handleBlockMouseDown = (e: React.MouseEvent, day: Day, block: Block) => {
+  const handleBlockMouseDown = (e: React.MouseEvent, day: Day, block: OverlapBlock) => {
     if (e.button !== 0) return; // right-click handled by onContextMenu
     e.preventDefault();
     e.stopPropagation();
+    setContextMenu(null);
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     const relY = e.clientY - rect.top;
     const slotWithinBlock = Math.max(0, Math.min(block.numSlots - 1, Math.floor(relY / 40)));
     const timeIdx = block.startIdx + slotWithinBlock;
+
+    // Smart click-through: if a different student is selected, add them instead
+    if (selectedAssignmentStudent && selectedAssignmentStudent !== block.studentId) {
+      const time = times[timeIdx];
+      const alreadyHere = assignments.find(
+        (a) => a.day === day && a.time === time && a.studentId === selectedAssignmentStudent
+      );
+      if (!alreadyHere) {
+        onRangeAssign(day, timeIdx, timeIdx, selectedAssignmentStudent);
+      }
+      // Start a drag so they can extend by dragging further
+      setDragState({
+        active: true, day, originIdx: timeIdx, currentIdx: timeIdx,
+        dragStudentId: selectedAssignmentStudent, originWasAssigned: false,
+      });
+      return;
+    }
+
+    // Same student or none selected → existing behavior (drag to extend/shrink)
     setDragState({
       active: true, day, originIdx: timeIdx, currentIdx: timeIdx,
       dragStudentId: block.studentId, originWasAssigned: true,
     });
   };
 
-  const handleBlockContextMenu = (e: React.MouseEvent, day: Day, block: Block) => {
+  // Right-click context menu on blocks
+  const handleBlockContextMenu = (e: React.MouseEvent, day: Day, block: OverlapBlock) => {
     e.preventDefault();
     e.stopPropagation();
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
@@ -256,17 +322,27 @@ export default function ScheduleBuilder({
     });
   };
 
-  const handleContextMenuAction = useCallback((action: "remove-slot" | "remove-block") => {
+  const handleContextMenuAction = useCallback((action: "remove-slot" | "remove-block" | "clear-slot") => {
     if (!contextMenu) return;
-    const { day, timeIdx, blockStartIdx, blockEndIdx } = contextMenu;
-    if (action === "remove-slot") {
-      onRangeAssign(day, timeIdx, timeIdx, null);
-    } else {
-      onRangeAssign(day, blockStartIdx, blockEndIdx, null);
+    const { day, timeIdx, studentId, blockStartIdx, blockEndIdx } = contextMenu;
+    switch (action) {
+      case "remove-slot":
+        onRangeAssign(day, timeIdx, timeIdx, `unassign:${studentId}`);
+        break;
+      case "remove-block":
+        onRangeAssign(day, blockStartIdx, blockEndIdx, `unassign:${studentId}`);
+        break;
+      case "clear-slot":
+        // Remove all students at this slot
+        assignments
+          .filter((a) => a.day === day && a.time === times[timeIdx])
+          .forEach((a) => onRangeAssign(day, timeIdx, timeIdx, `unassign:${a.studentId}`));
+        break;
     }
     setContextMenu(null);
-  }, [contextMenu, onRangeAssign]);
+  }, [contextMenu, onRangeAssign, assignments, times]);
 
+  // Close context menu on outside click or scroll
   useEffect(() => {
     if (!contextMenu) return;
     const close = () => setContextMenu(null);
@@ -279,7 +355,7 @@ export default function ScheduleBuilder({
   }, [contextMenu]);
 
   return (
-    <div className="schedule-builder">
+    <div className="schedule-builder overlap-schedule-builder">
       <div className="sb-draft-bar">
         <span className="sb-draft-status">
           {activeDraftName ? (
@@ -289,6 +365,7 @@ export default function ScheduleBuilder({
           ) : (
             <span className="sb-draft-unsaved">Unsaved</span>
           )}
+          <span className="sb-overlap-badge">Overlap Mode</span>
         </span>
         <div className="sb-draft-actions">
           {onGenerateSuggestion && (
@@ -357,7 +434,7 @@ export default function ScheduleBuilder({
           )}
         </div>
 
-        {/* Time grid â€” column-based, matching StudentSchedulesCalendar */}
+        {/* Time grid — column-based with overlap support */}
         <div className={`assignment-grid-wrapper${dragState?.active ? " is-dragging" : ""}`}>
           <div className="assignment-grid">
 
@@ -374,7 +451,12 @@ export default function ScheduleBuilder({
             {/* One column per day */}
             {days.map((day) => {
               const dayTimes = getTimesForDay(day);
-              const blocks = computeBlocks(assignments, day, times);
+              // Build fixed column map: each student gets a consistent column for the entire day
+              const studentsForDay = getStudentsForDay(assignments, day);
+              const studentColumnMap = new Map<string, number>();
+              studentsForDay.forEach((sid, idx) => studentColumnMap.set(sid, idx));
+              const totalColumns = Math.max(1, studentsForDay.length);
+              const blocks = computeOverlapBlocks(assignments, day, times, studentColumnMap, totalColumns);
 
               const isDragDay = !!(dragState?.active && dragState.day === day);
               const dragStart = isDragDay ? Math.min(dragState!.originIdx, dragState!.currentIdx) : -1;
@@ -390,7 +472,7 @@ export default function ScheduleBuilder({
                   <div className="assignment-day-header">{day}</div>
 
                   <div className="assignment-day-body">
-                    {/* Invisible interaction slots â€” provide hit targets + border grid */}
+                    {/* Interaction slots with coverage badges */}
                     {times.map((time, timeIdx) => {
                       const isOutOfBounds = timeIdx >= dayTimes.length;
                       return (
@@ -406,24 +488,31 @@ export default function ScheduleBuilder({
                       );
                     })}
 
-                    {/* Committed assignment blocks */}
+                    {/* Committed assignment blocks with overlap layout */}
                     {blocks.map((block) => {
                       const student = students.find((s) => s.id === block.studentId);
                       if (!student) return null;
                       const hours = block.numSlots * 0.5;
                       const timeRange = getTimeRangeLabel(block.startIdx, block.endIdx, times);
-                      const tooltip = `${student.name}\n${hours}h \u2022 ${block.numSlots} slots\n${timeRange}`;
+                      const tooltipText = `${student.name}\n${hours}h • ${block.numSlots} slots\n${timeRange}`;
+                      
+                      // Column layout: width and left position based on overlap
+                      const colWidth = 100 / block.colTotal;
+                      const colLeft = block.colIndex * colWidth;
+                      
                       return (
                         <div
                           key={`${block.studentId}-${block.startIdx}`}
-                          className="assignment-block"
+                          className="assignment-block overlap-block"
                           style={{
                             top: block.startIdx * 40,
                             height: block.numSlots * 40,
+                            width: `${colWidth}%`,
+                            left: `${colLeft}%`,
                             background: student.color,
                             borderLeftColor: student.color,
                           }}
-                          onMouseEnter={(e) => setTooltip({ text: tooltip, x: e.clientX, y: e.clientY })}
+                          onMouseEnter={(e) => setTooltip({ text: tooltipText, x: e.clientX, y: e.clientY })}
                           onMouseMove={(e) => setTooltip((prev) => prev ? { ...prev, x: e.clientX, y: e.clientY } : null)}
                           onMouseLeave={() => setTooltip(null)}
                           onMouseDown={(e) => { setTooltip(null); handleBlockMouseDown(e, day, block); }}
@@ -476,6 +565,7 @@ export default function ScheduleBuilder({
         </div>
       )}
 
+      {/* Right-click context menu */}
       {contextMenu && (
         <div
           className="overlap-context-menu"
@@ -493,6 +583,13 @@ export default function ScheduleBuilder({
             onClick={() => handleContextMenuAction("remove-block")}
           >
             Remove {students.find((s) => s.id === contextMenu.studentId)?.name ?? "student"} (entire block)
+          </button>
+          <div className="overlap-context-divider" />
+          <button
+            className="overlap-context-item overlap-context-item--danger"
+            onClick={() => handleContextMenuAction("clear-slot")}
+          >
+            Clear all from this slot
           </button>
         </div>
       )}
